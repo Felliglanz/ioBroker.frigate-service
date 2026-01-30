@@ -821,14 +821,23 @@
             }
 
             return { default: { FrigateServiceItemsEditor, FrigateServiceCameraDiscovery } };
+        },
+        // Some Admin/federation runtimes request the module without leading './'
+        'Components': async function () {
+            return moduleMap['./Components']();
         }
     };
 
     function get(module) {
-        if (!moduleMap[module]) {
-            return Promise.reject(new Error(`Unknown module: ${module}`));
+        const factoryFn = moduleMap[module];
+        if (!factoryFn) {
+            return Promise.reject(new Error(`Module ${module} not found in ${REMOTE_NAME}`));
         }
-        return Promise.resolve().then(() => moduleMap[module]());
+        // Module federation expects a Promise that resolves to a *factory function*.
+        // That factory function must return the module exports object.
+        return Promise.resolve()
+            .then(() => factoryFn())
+            .then(mod => () => mod);
     }
 
     function init(scope) {
