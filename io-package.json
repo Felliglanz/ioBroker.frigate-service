@@ -26,10 +26,11 @@
     "connectionType": "local",
     "dataSource": "poll",
     "enabled": true,
-    "extIcon": "admin/frigate-service.png",
-    "icon": "frigate-service.png",
+    "extIcon": "admin/frigate-service.svg",
+    "icon": "frigate-service.svg",
     "adminUI": {
-      "config": "json"
+      "config": "json",
+      "custom": "custom/customComponents.js"
     },
     "encryptedNative": [
       "frigateAuthPassword",
@@ -55,3 +56,4 @@
   "objects": [],
   "instanceObjects": []
 }
+
