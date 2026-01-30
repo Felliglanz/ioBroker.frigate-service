@@ -186,6 +186,16 @@
             const btnDangerStyle = Object.assign({}, btnStyle, { border: `1px solid ${isDark ? 'rgba(255,120,120,0.5)' : 'rgba(200,0,0,0.25)'}` });
             const listBtnStyle = isActive => ({ width: '100%', textAlign: 'left', padding: '10px 10px', border: 'none', borderBottom: `1px solid ${colors.rowBorder}`, background: isActive ? colors.active : 'transparent', cursor: 'pointer', color: colors.text, display: 'flex', alignItems: 'center', gap: 8 });
 
+            // Native <select>/<option> popups can be hard to read in dark mode in some browsers.
+            // Provide a best-effort readable styling.
+            const selectStyle = Object.assign({}, inputStyle, {
+                backgroundColor: colors.panelBg,
+                color: colors.text,
+                colorScheme: isDark ? 'dark' : 'light',
+                WebkitTextFillColor: colors.text,
+            });
+            const optionStyle = { background: colors.panelBg, color: colors.text };
+
             const rawItems = normalizeArray((props && props.data && (props.data[attr] || props.data.items)) || (props && props.data && props.data[DEFAULT_ITEMS_ATTR]) || []);
             const items = rawItems.map(it => ensureTitle(it, t));
 
@@ -370,9 +380,9 @@
                 const options = camerasGlobal.filter(c => c && c.id).map(c => ({ value: String(c.id), label: c.name ? String(c.name) : String(c.id) }));
                 return React.createElement(
                     'select',
-                    { style: inputStyle, value: value || '', onChange: e => onChange(e.target.value) },
-                    React.createElement('option', { value: '' }, t('Select…')),
-                    options.map(o => React.createElement('option', { key: o.value, value: o.value }, o.label))
+                    { style: selectStyle, value: value || '', onChange: e => onChange(e.target.value) },
+                    React.createElement('option', { value: '', style: optionStyle }, t('Select…')),
+                    options.map(o => React.createElement('option', { key: o.value, value: o.value, style: optionStyle }, o.label))
                 );
             };
 
@@ -380,9 +390,9 @@
                 const options = targetsGlobal.filter(tg => tg && tg.id).map(tg => ({ value: String(tg.id), label: tg.name ? String(tg.name) : String(tg.id) }));
                 return React.createElement(
                     'select',
-                    { style: inputStyle, value: value || '', onChange: e => onChange(e.target.value) },
-                    React.createElement('option', { value: '' }, t('Select…')),
-                    options.map(o => React.createElement('option', { key: o.value, value: o.value }, o.label))
+                    { style: selectStyle, value: value || '', onChange: e => onChange(e.target.value) },
+                    React.createElement('option', { value: '', style: optionStyle }, t('Select…')),
+                    options.map(o => React.createElement('option', { key: o.value, value: o.value, style: optionStyle }, o.label))
                 );
             };
 
@@ -443,9 +453,9 @@
                               React.createElement('label', { style: labelStyle }, t('Kind')),
                               React.createElement(
                                   'select',
-                                  { style: inputStyle, value: selectedItem.kind || 'notify', onChange: e => updateSelected('kind', e.target.value) },
-                                  React.createElement('option', { value: 'notify' }, t('Notify (Discord/Telegram)')),
-                                  React.createElement('option', { value: 'device' }, t('Device (switch)'))
+                                  { style: selectStyle, value: selectedItem.kind || 'notify', onChange: e => updateSelected('kind', e.target.value) },
+                                  React.createElement('option', { value: 'notify', style: optionStyle }, t('Notify (Discord/Telegram)')),
+                                  React.createElement('option', { value: 'device', style: optionStyle }, t('Device (switch)'))
                               ),
 
                               React.createElement('div', { style: { marginTop: 16, fontSize: 12, fontWeight: 700 } }, t('Cameras')),
@@ -510,9 +520,9 @@
                                         React.createElement('label', { style: labelStyle }, t('Media mode')),
                                         React.createElement(
                                             'select',
-                                            { style: inputStyle, value: (selectedItem.notify && selectedItem.notify.mediaMode) || 'clipFirst', onChange: e => updateSelectedPath('notify.mediaMode', e.target.value) },
-                                            React.createElement('option', { value: 'clipFirst' }, t('Clip first (fallback snapshot)')),
-                                            React.createElement('option', { value: 'snapshotOnly' }, t('Snapshot only'))
+                                            { style: selectStyle, value: (selectedItem.notify && selectedItem.notify.mediaMode) || 'clipFirst', onChange: e => updateSelectedPath('notify.mediaMode', e.target.value) },
+                                            React.createElement('option', { value: 'clipFirst', style: optionStyle }, t('Clip first (fallback snapshot)')),
+                                            React.createElement('option', { value: 'snapshotOnly', style: optionStyle }, t('Snapshot only'))
                                         ),
                                         React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
                                             React.createElement('div', null,
@@ -577,9 +587,9 @@
                                         React.createElement('label', { style: labelStyle }, t('Mode')),
                                         React.createElement(
                                             'select',
-                                            { style: inputStyle, value: (selectedItem.time && selectedItem.time.mode) || 'astroWindow', onChange: e => updateSelectedPath('time.mode', e.target.value) },
-                                            React.createElement('option', { value: 'always' }, t('Always')),
-                                            React.createElement('option', { value: 'astroWindow' }, t('Astro window (start/end states)'))
+                                            { style: selectStyle, value: (selectedItem.time && selectedItem.time.mode) || 'astroWindow', onChange: e => updateSelectedPath('time.mode', e.target.value) },
+                                            React.createElement('option', { value: 'always', style: optionStyle }, t('Always')),
+                                            React.createElement('option', { value: 'astroWindow', style: optionStyle }, t('Astro window (start/end states)'))
                                         ),
                                         (selectedItem.time && selectedItem.time.mode) === 'astroWindow'
                                             ? React.createElement(
@@ -613,6 +623,27 @@
     function createCameraDiscovery(React) {
         return function FrigateServiceCameraDiscovery(props) {
             const socket = (props && props.socket) || globalThis.socket || globalThis._socket || null;
+            const theme = (props && props.theme) || null;
+            const themePalette = theme && theme.palette ? theme.palette : null;
+            const themeType = (themePalette && (themePalette.mode === 'dark' || themePalette.mode === 'light')) ? themePalette.mode : '';
+            const isDark = themeType === 'dark';
+
+            const colors = isDark
+                ? {
+                      panelBg: 'rgba(255,255,255,0.04)',
+                      panelBg2: 'rgba(255,255,255,0.03)',
+                      text: 'rgba(255,255,255,0.92)',
+                      textMuted: 'rgba(255,255,255,0.70)',
+                      border: 'rgba(255,255,255,0.16)',
+                  }
+                : {
+                      panelBg: '#ffffff',
+                      panelBg2: '#ffffff',
+                      text: '#111111',
+                      textMuted: 'rgba(0,0,0,0.70)',
+                      border: 'rgba(0,0,0,0.15)',
+                  };
+
             const adapterName = (props && (props.adapterName || props.adapter)) || 'frigate-service';
             const instance = (props && props.instance !== undefined) ? props.instance : 0;
             const adapterInstance = `${adapterName}.${instance}`;
@@ -742,19 +773,24 @@
             const canDiscover = !!socket;
 
             const boxStyle = {
-                border: '1px solid rgba(127,127,127,0.35)',
+                border: `1px solid ${colors.border}`,
                 borderRadius: 6,
                 padding: 10,
                 marginBottom: 10,
+                background: colors.panelBg,
+                color: colors.text,
             };
             const btnStyle = {
                 padding: '6px 10px',
                 borderRadius: 6,
-                border: '1px solid rgba(127,127,127,0.35)',
-                background: 'transparent',
+                border: `1px solid ${colors.border}`,
+                background: colors.panelBg2,
                 cursor: 'pointer',
                 marginRight: 8,
+                color: colors.text,
             };
+            const mutedStyle = { fontSize: 12, opacity: 0.95, color: colors.textMuted, marginBottom: 8 };
+            const errStyle = { color: isDark ? '#ff8080' : '#b00020', fontSize: 12, marginBottom: 6 };
 
             return React.createElement(
                 'div',
@@ -762,7 +798,7 @@
                 React.createElement('div', { style: { fontWeight: 700, marginBottom: 6 } }, t('Discover cameras from Frigate')),
                 React.createElement(
                     'div',
-                    { style: { fontSize: 12, opacity: 0.8, marginBottom: 8 } },
+                    { style: mutedStyle },
                     t('Click to scan all frigate.* instances and select which cameras to add to the Cameras table.')
                 ),
                 React.createElement(
@@ -771,22 +807,22 @@
                     React.createElement('button', { type: 'button', style: btnStyle, disabled: !canDiscover || loading, onClick: onDiscover }, loading ? t('Discovering…') : t('Discover cameras')),
                     React.createElement('button', { type: 'button', style: btnStyle, disabled: !list.length, onClick: applySelection }, t('Apply selection to table')),
                 ),
-                error ? React.createElement('div', { style: { color: '#b00020', fontSize: 12, marginBottom: 6 } }, `${t('Error')}: ${error}`) : null,
+                error ? React.createElement('div', { style: errStyle }, `${t('Error')}: ${error}`) : null,
                 list.length
                     ? React.createElement(
                           'div',
-                          { style: { maxHeight: 220, overflow: 'auto', borderTop: '1px solid rgba(127,127,127,0.2)', paddingTop: 8 } },
+                          { style: { maxHeight: 220, overflow: 'auto', borderTop: `1px solid ${colors.border}`, paddingTop: 8 } },
                           list.map(cam =>
                               React.createElement(
                                   'label',
-                                  { key: `${cam.instance}|${cam.id}`, style: { display: 'flex', gap: 8, alignItems: 'center', padding: '4px 0', cursor: 'pointer' } },
+                                  { key: `${cam.instance}|${cam.id}`, style: { display: 'flex', gap: 8, alignItems: 'center', padding: '4px 0', cursor: 'pointer', color: colors.text } },
                                   React.createElement('input', { type: 'checkbox', checked: selected.has(cam.id), onChange: () => toggle(cam.id) }),
                                   React.createElement('span', null, `${cam.name} (${cam.id})`),
-                                  cam.instance ? React.createElement('span', { style: { opacity: 0.7, fontSize: 12 } }, `– ${cam.instance}`) : null
+                                  cam.instance ? React.createElement('span', { style: { opacity: 0.95, fontSize: 12, color: colors.textMuted } }, `– ${cam.instance}`) : null
                               )
                           )
                       )
-                    : React.createElement('div', { style: { fontSize: 12, opacity: 0.7 } }, t('No discovered cameras yet.'))
+                    : React.createElement('div', { style: { fontSize: 12, opacity: 0.95, color: colors.textMuted } }, t('No discovered cameras yet.'))
             );
         };
     }
