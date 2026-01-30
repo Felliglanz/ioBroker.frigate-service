@@ -221,7 +221,15 @@
             const optionStyle = { background: colors.panelBg, color: colors.text };
 
             const rawItems = normalizeArray((props && props.data && (props.data[attr] || props.data.items)) || (props && props.data && props.data[DEFAULT_ITEMS_ATTR]) || []);
-            const items = rawItems.map(it => ensureTitle(it, t));
+
+            const [localItems, setLocalItems] = React.useState(rawItems);
+
+            React.useEffect(() => {
+                // Keep local state in sync with external config updates.
+                setLocalItems(rawItems);
+            }, [rawItems.length]);
+
+            const items = normalizeArray(localItems).map(it => ensureTitle(it, t));
 
             const camerasGlobal = normalizeArray(props && props.data && props.data.cameras);
             const targetsGlobal = normalizeArray(props && props.data && props.data.notifyTargets);
@@ -235,26 +243,73 @@
                 }
             }, [items.length, selectedIndex]);
 
-            const updateItems = nextItems => {
-                if (!props || typeof props.onChange !== 'function') return;
-                const safeItems = normalizeArray(nextItems).map(it => ensureTitle(it, t));
-                try {
-                    props.onChange(DEFAULT_ITEMS_ATTR, safeItems);
-                } catch {
-                    // ignore
-                }
-                if (attr !== DEFAULT_ITEMS_ATTR) {
+            const applyItemsChange = safeItems => {
+                const nextData = (props && props.data && typeof props.data === 'object')
+                    ? Object.assign({}, props.data, { [DEFAULT_ITEMS_ATTR]: safeItems, [attr]: safeItems })
+                    : { [DEFAULT_ITEMS_ATTR]: safeItems, [attr]: safeItems };
+
+                // Fast UI feedback even if parent update is async.
+                try { setLocalItems(safeItems); } catch { /* ignore */ }
+
+                let applied = false;
+
+                // Preferred signatures in many jsonConfig runtimes
+                if (props && typeof props.setValue === 'function') {
                     try {
-                        props.onChange(attr, safeItems);
+                        props.setValue(attr, safeItems);
+                        applied = true;
                     } catch {
                         // ignore
                     }
                 }
+
+                if (!applied && props && typeof props.onChange === 'function') {
+                    // Signature A: onChange(attr, value)
+                    try {
+                        props.onChange(attr, safeItems);
+                        applied = true;
+                    } catch {
+                        // ignore
+                    }
+
+                    // Signature B: onChange(newData, isChanged)
+                    if (!applied) {
+                        try {
+                            props.onChange(nextData, true);
+                            applied = true;
+                        } catch {
+                            // ignore
+                        }
+                    }
+
+                    // Signature C: onChange(newData)
+                    if (!applied) {
+                        try {
+                            props.onChange(nextData);
+                            applied = true;
+                        } catch {
+                            // ignore
+                        }
+                    }
+                }
+
+                // Some admin versions expose forceUpdate; ensure we never pass stale data.
                 try {
-                    props.forceUpdate && props.forceUpdate([attr], props.data);
+                    if (props && typeof props.forceUpdate === 'function') {
+                        if (props.forceUpdate.length >= 2) {
+                            props.forceUpdate([attr], nextData);
+                        } else {
+                            props.forceUpdate();
+                        }
+                    }
                 } catch {
                     // ignore
                 }
+            };
+
+            const updateItems = nextItems => {
+                const safeItems = normalizeArray(nextItems).map(it => ensureTitle(it, t));
+                applyItemsChange(safeItems);
             };
 
             const selectedItem = items[selectedIndex] || null;
