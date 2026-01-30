@@ -45,13 +45,6 @@
 
         "_divider1": { "type": "divider", "label": "" },
 
-        "cameraDiscovery": {
-          "type": "custom",
-          "label": "Camera discovery",
-          "url": "custom/customComponents.js",
-          "name": "FrigateServiceUI/Components/FrigateServiceCameraDiscovery"
-        },
-
         "cameras": {
           "type": "table",
           "label": "Cameras",

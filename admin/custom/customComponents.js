@@ -644,212 +644,6 @@
         };
     }
 
-    function createCameraDiscovery(React) {
-        return function FrigateServiceCameraDiscovery(props) {
-            const socket = (props && props.socket) || globalThis.socket || globalThis._socket || null;
-            const theme = (props && props.theme) || null;
-            const themeType = detectThemeMode(props, theme);
-            const isDark = themeType === 'dark';
-
-            const colors = isDark
-                ? {
-                      panelBg: 'rgba(255,255,255,0.04)',
-                      panelBg2: 'rgba(255,255,255,0.03)',
-                      text: 'rgba(255,255,255,0.92)',
-                      textMuted: 'rgba(255,255,255,0.70)',
-                      border: 'rgba(255,255,255,0.16)',
-                  }
-                : {
-                      panelBg: '#ffffff',
-                      panelBg2: '#ffffff',
-                      text: '#111111',
-                      textMuted: 'rgba(0,0,0,0.70)',
-                      border: 'rgba(0,0,0,0.15)',
-                  };
-
-            const adapterName = (props && (props.adapterName || props.adapter)) || 'frigate-service';
-            const instance = (props && props.instance !== undefined) ? props.instance : 0;
-            const adapterInstance = `${adapterName}.${instance}`;
-
-            const t = text => {
-                try {
-                    if (props && typeof props.t === 'function') return props.t(text);
-                } catch {
-                    // ignore
-                }
-                const I18n = globalThis.I18n || (globalThis.window && globalThis.window.I18n);
-                try {
-                    if (I18n && typeof I18n.t === 'function') return I18n.t(text);
-                } catch {
-                    // ignore
-                }
-                return text;
-            };
-
-            const configured = Array.isArray(props && props.data && props.data.cameras) ? props.data.cameras : [];
-            const configuredIds = new Set(configured.filter(c => c && c.id).map(c => String(c.id)));
-
-            const [loading, setLoading] = React.useState(false);
-            const [error, setError] = React.useState('');
-            const [discovered, setDiscovered] = React.useState([]); // [{instance, cameras:[{id,name}]}]
-            const [selected, setSelected] = React.useState(() => new Set(Array.from(configuredIds)));
-
-            React.useEffect(() => {
-                // keep selected in sync if user edits table manually
-                const next = new Set(Array.from(configuredIds));
-                setSelected(prev => {
-                    const merged = new Set(Array.from(prev));
-                    for (const id of next) merged.add(id);
-                    return merged;
-                });
-                // eslint-disable-next-line react-hooks/exhaustive-deps
-            }, [configured.length]);
-
-            const sendTo = (command, message) => {
-                if (!socket || typeof socket.sendTo !== 'function') {
-                    return Promise.reject(new Error('socket.sendTo not available'));
-                }
-                return new Promise((resolve, reject) => {
-                    try {
-                        socket.sendTo(adapterInstance, command, message, result => {
-                            if (!result) return reject(new Error('No response'));
-                            if (result.ok === false) return reject(new Error(result.error || 'Discovery failed'));
-                            resolve(result);
-                        });
-                    } catch (e) {
-                        reject(e);
-                    }
-                });
-            };
-
-            const onDiscover = async () => {
-                setError('');
-                setLoading(true);
-                try {
-                    const res = await sendTo('discoverCameras', { instances: [] });
-                    const instances = Array.isArray(res.instances) ? res.instances : [];
-                    setDiscovered(instances);
-
-                    const nextSelected = new Set(Array.from(selected));
-                    for (const inst of instances) {
-                        for (const cam of (inst && Array.isArray(inst.cameras) ? inst.cameras : [])) {
-                            if (cam && cam.id) nextSelected.add(String(cam.id));
-                        }
-                    }
-                    setSelected(nextSelected);
-                } catch (e) {
-                    setError(e && e.message ? e.message : String(e));
-                } finally {
-                    setLoading(false);
-                }
-            };
-
-            const flatten = () => {
-                const out = [];
-                for (const inst of discovered) {
-                    const cams = inst && Array.isArray(inst.cameras) ? inst.cameras : [];
-                    for (const cam of cams) {
-                        if (!cam || !cam.id) continue;
-                        out.push({ instance: inst.instance || '', id: String(cam.id), name: cam.name ? String(cam.name) : String(cam.id) });
-                    }
-                }
-                out.sort((a, b) => (a.instance + a.id).localeCompare(b.instance + b.id));
-                return out;
-            };
-
-            const applySelection = () => {
-                const list = flatten();
-                const map = new Map();
-                // keep existing names first
-                for (const c of configured) {
-                    if (!c || !c.id) continue;
-                    map.set(String(c.id), { id: String(c.id), name: c.name ? String(c.name) : String(c.id) });
-                }
-                for (const cam of list) {
-                    if (!selected.has(cam.id)) continue;
-                    if (!map.has(cam.id)) {
-                        map.set(cam.id, { id: cam.id, name: cam.name || cam.id });
-                    }
-                }
-
-                const next = Array.from(map.values());
-                if (props && typeof props.onChange === 'function') {
-                    props.onChange('cameras', next);
-                }
-                try {
-                    props.forceUpdate && props.forceUpdate(['cameras'], props.data);
-                } catch {
-                    // ignore
-                }
-            };
-
-            const toggle = id => {
-                setSelected(prev => {
-                    const next = new Set(Array.from(prev));
-                    if (next.has(id)) next.delete(id);
-                    else next.add(id);
-                    return next;
-                });
-            };
-
-            const list = flatten();
-            const canDiscover = !!socket;
-
-            const boxStyle = {
-                border: `1px solid ${colors.border}`,
-                borderRadius: 6,
-                padding: 10,
-                marginBottom: 10,
-                background: colors.panelBg,
-                color: colors.text,
-            };
-            const btnStyle = {
-                padding: '6px 10px',
-                borderRadius: 6,
-                border: `1px solid ${colors.border}`,
-                background: colors.panelBg2,
-                cursor: 'pointer',
-                marginRight: 8,
-                color: colors.text,
-            };
-            const mutedStyle = { fontSize: 12, opacity: 0.95, color: colors.textMuted, marginBottom: 8 };
-            const errStyle = { color: isDark ? '#ff8080' : '#b00020', fontSize: 12, marginBottom: 6 };
-
-            return React.createElement(
-                'div',
-                { style: boxStyle },
-                React.createElement('div', { style: { fontWeight: 700, marginBottom: 6 } }, t('Discover cameras from Frigate')),
-                React.createElement(
-                    'div',
-                    { style: mutedStyle },
-                    t('Click to scan all frigate.* instances and select which cameras to add to the Cameras table.')
-                ),
-                React.createElement(
-                    'div',
-                    { style: { marginBottom: 8 } },
-                    React.createElement('button', { type: 'button', style: btnStyle, disabled: !canDiscover || loading, onClick: onDiscover }, loading ? t('Discovering…') : t('Discover cameras')),
-                    React.createElement('button', { type: 'button', style: btnStyle, disabled: !list.length, onClick: applySelection }, t('Apply selection to table')),
-                ),
-                error ? React.createElement('div', { style: errStyle }, `${t('Error')}: ${error}`) : null,
-                list.length
-                    ? React.createElement(
-                          'div',
-                          { style: { maxHeight: 220, overflow: 'auto', borderTop: `1px solid ${colors.border}`, paddingTop: 8 } },
-                          list.map(cam =>
-                              React.createElement(
-                                  'label',
-                                  { key: `${cam.instance}|${cam.id}`, style: { display: 'flex', gap: 8, alignItems: 'center', padding: '4px 0', cursor: 'pointer', color: colors.text } },
-                                  React.createElement('input', { type: 'checkbox', checked: selected.has(cam.id), onChange: () => toggle(cam.id) }),
-                                  React.createElement('span', null, `${cam.name} (${cam.id})`),
-                                  cam.instance ? React.createElement('span', { style: { opacity: 0.95, fontSize: 12, color: colors.textMuted } }, `– ${cam.instance}`) : null
-                              )
-                          )
-                      )
-                    : React.createElement('div', { style: { fontSize: 12, opacity: 0.95, color: colors.textMuted } }, t('No discovered cameras yet.'))
-            );
-        };
-    }
-
     // Register immediately for Admin environments that only look at window.customComponents
     try {
         const ReactNow = globalThis.React;
@@ -857,7 +651,6 @@
         if (ReactNow) {
             globalThis.customComponents = globalThis.customComponents || {};
             globalThis.customComponents.FrigateServiceItemsEditor = createItemsEditor(ReactNow, AdapterReactNow);
-            globalThis.customComponents.FrigateServiceCameraDiscovery = createCameraDiscovery(ReactNow);
         }
     } catch {
         // ignore
@@ -869,17 +662,15 @@
             const AdapterReact = await loadShared('@iobroker/adapter-react-v5');
             if (!React) throw new Error('FrigateService custom UI: React not available.');
             const FrigateServiceItemsEditor = createItemsEditor(React, AdapterReact);
-            const FrigateServiceCameraDiscovery = createCameraDiscovery(React);
 
             try {
                 globalThis.customComponents = globalThis.customComponents || {};
                 globalThis.customComponents.FrigateServiceItemsEditor = FrigateServiceItemsEditor;
-                globalThis.customComponents.FrigateServiceCameraDiscovery = FrigateServiceCameraDiscovery;
             } catch {
                 // ignore
             }
 
-            return { default: { FrigateServiceItemsEditor, FrigateServiceCameraDiscovery } };
+            return { default: { FrigateServiceItemsEditor } };
         },
         // Some Admin/federation runtimes request the module without leading './'
         'Components': async function () {
