@@ -49,6 +49,7 @@
         "cameras": {
           "type": "table",
           "label": "Cameras",
+          "help": "Camera key must match frigate.0.events.after.camera (e.g. einfahrt). Display name is optional; if empty, the key will be shown prettified.",
           "items": [
             {
               "attr": "id",
@@ -62,7 +63,7 @@
               "type": "text",
               "title": "Display name",
               "default": "",
-              "placeholder": "Einfahrt"
+              "placeholder": "(optional) Einfahrt"
             }
           ]
         },
@@ -70,7 +71,7 @@
         "notifyTargets": {
           "type": "table",
           "label": "Notification targets",
-          "help": "Sensitive fields are masked in the UI. For Frigate auth fields, encryption is enabled via encryptedNative.",
+          "help": "Use a unique Target id (e.g. kamera_einfahrt). Sensitive fields are masked in the UI. For Frigate auth fields, encryption is enabled via encryptedNative.",
           "items": [
             {
               "attr": "id",
@@ -78,13 +79,6 @@
               "title": "Target id",
               "default": "",
               "placeholder": "discord_haus"
-            },
-            {
-              "attr": "name",
-              "type": "text",
-              "title": "Name",
-              "default": "",
-              "placeholder": "Discord Haus"
             },
             {
               "attr": "type",

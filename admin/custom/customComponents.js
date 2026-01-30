@@ -8,7 +8,7 @@
     'use strict';
 
     const REMOTE_NAME = 'FrigateServiceUI';
-    const UI_VERSION = '2026-01-30 20260130-1';
+    const UI_VERSION = '2026-01-31 20260131-1';
 
     let shareScope;
 
@@ -235,6 +235,40 @@
             });
             const optionStyle = { background: colors.panelBg, color: colors.text };
 
+            const dropdownItemStyle = isSelected => ({
+                padding: '8px 10px',
+                cursor: 'pointer',
+                background: isSelected ? colors.active : 'transparent',
+                color: colors.text,
+                borderBottom: `1px solid ${colors.rowBorder}`,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+            });
+
+            const dropdownMenuStyle = {
+                position: 'absolute',
+                zIndex: 50,
+                left: 0,
+                right: 0,
+                top: 'calc(100% + 4px)',
+                maxHeight: 260,
+                overflowY: 'auto',
+                borderRadius: 6,
+                border: `1px solid ${colors.border}`,
+                background: colors.panelBg,
+                boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.55)' : '0 10px 30px rgba(0,0,0,0.18)',
+            };
+
+            const dropdownButtonStyle = Object.assign({}, inputStyle, {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                userSelect: 'none',
+                backgroundColor: colors.panelBg,
+            });
+
             const rawItems = normalizeArray((props && props.data && (props.data[attr] || props.data.items)) || (props && props.data && props.data[DEFAULT_ITEMS_ATTR]) || []);
 
             const [localItems, setLocalItems] = React.useState(rawItems);
@@ -251,6 +285,33 @@
 
             const [selectedIndex, setSelectedIndex] = React.useState(0);
             const [selectContext, setSelectContext] = React.useState(null);
+            const [openDropdownId, setOpenDropdownId] = React.useState(null);
+
+            React.useEffect(() => {
+                const onDocClick = e => {
+                    try {
+                        // if click outside any dropdown, close
+                        const el = e && e.target;
+                        if (!el) return;
+                        if (el.closest && el.closest('[data-frigate-dd="1"]')) return;
+                    } catch {
+                        // ignore
+                    }
+                    setOpenDropdownId(null);
+                };
+                try {
+                    document.addEventListener('mousedown', onDocClick);
+                } catch {
+                    // ignore
+                }
+                return () => {
+                    try {
+                        document.removeEventListener('mousedown', onDocClick);
+                    } catch {
+                        // ignore
+                    }
+                };
+            }, []);
 
             React.useEffect(() => {
                 if (selectedIndex > items.length - 1) {
@@ -422,7 +483,12 @@
             const addCameraRow = () => {
                 if (!selectedItem) return;
                 const cams = normalizeArray(selectedItem.cameras).slice();
-                cams.push({ cameraId: '', targetId: '', comment: '' });
+                if ((selectedItem.kind || 'notify') === 'notify') {
+                    cams.push({ cameraId: '', targetId: '', comment: '' });
+                } else {
+                    // Device items only use cameras as an optional filter; no per-camera target override.
+                    cams.push({ cameraId: '', comment: '' });
+                }
                 updateSelected('cameras', cams);
             };
 
@@ -473,24 +539,112 @@
                 });
             };
 
-            const renderCameraSelect = (value, onChange) => {
-                const options = camerasGlobal.filter(c => c && c.id).map(c => ({ value: String(c.id), label: c.name ? String(c.name) : String(c.id) }));
+            const formatCameraLabel = c => {
+                const id = c && c.id ? String(c.id) : '';
+                const name = c && c.name ? String(c.name) : '';
+                if (!id) return '';
+                if (name && name.trim() && name.trim() !== id) return `${name.trim()} (${id})`;
+                return id;
+            };
+
+            const formatTargetLabel = tg => {
+                const id = tg && tg.id ? String(tg.id) : '';
+                const name = tg && tg.name ? String(tg.name) : '';
+                if (!id) return '';
+                if (name && name.trim() && name.trim() !== id) return `${name.trim()} (${id})`;
+                return id;
+            };
+
+            const renderDropdown = ({ id, value, options, onChange, placeholder }) => {
+                const selected = options.find(o => o.value === (value || '')) || null;
+                const buttonText = selected ? selected.label : (placeholder || t('Select…'));
+                const isOpen = openDropdownId === id;
+
                 return React.createElement(
-                    'select',
-                    { style: selectStyle, value: value || '', onChange: e => onChange(e.target.value) },
-                    React.createElement('option', { value: '', style: optionStyle }, t('Select…')),
-                    options.map(o => React.createElement('option', { key: o.value, value: o.value, style: optionStyle }, o.label))
+                    'div',
+                    { style: { position: 'relative' }, 'data-frigate-dd': '1' },
+                    React.createElement(
+                        'div',
+                        {
+                            style: dropdownButtonStyle,
+                            role: 'button',
+                            tabIndex: 0,
+                            onClick: () => setOpenDropdownId(isOpen ? null : id),
+                            onKeyDown: e => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    setOpenDropdownId(isOpen ? null : id);
+                                }
+                                if (e.key === 'Escape') setOpenDropdownId(null);
+                            },
+                            title: buttonText,
+                        },
+                        React.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis' } }, buttonText),
+                        React.createElement('span', { style: { opacity: 0.85, marginLeft: 8 } }, isOpen ? '▲' : '▼')
+                    ),
+                    isOpen
+                        ? React.createElement(
+                              'div',
+                              { style: dropdownMenuStyle },
+                              React.createElement(
+                                  'div',
+                                  {
+                                      style: dropdownItemStyle(!value),
+                                      onClick: () => {
+                                          setOpenDropdownId(null);
+                                          onChange('');
+                                      },
+                                  },
+                                  placeholder || t('Select…')
+                              ),
+                              options.map(o =>
+                                  React.createElement(
+                                      'div',
+                                      {
+                                          key: o.value,
+                                          style: dropdownItemStyle(o.value === value),
+                                          onClick: () => {
+                                              setOpenDropdownId(null);
+                                              onChange(o.value);
+                                          },
+                                          title: o.label,
+                                      },
+                                      o.label
+                                  )
+                              )
+                          )
+                        : null
                 );
             };
 
-            const renderTargetSelect = (value, onChange) => {
-                const options = targetsGlobal.filter(tg => tg && tg.id).map(tg => ({ value: String(tg.id), label: tg.name ? String(tg.name) : String(tg.id) }));
-                return React.createElement(
-                    'select',
-                    { style: selectStyle, value: value || '', onChange: e => onChange(e.target.value) },
-                    React.createElement('option', { value: '', style: optionStyle }, t('Select…')),
-                    options.map(o => React.createElement('option', { key: o.value, value: o.value, style: optionStyle }, o.label))
-                );
+            const renderCameraSelect = (value, onChange, ddId) => {
+                const options = camerasGlobal
+                    .filter(c => c && c.id)
+                    .map(c => ({ value: String(c.id), label: formatCameraLabel(c) }))
+                    .filter(o => o.value);
+
+                return renderDropdown({
+                    id: ddId || `camera:${value || ''}`,
+                    value: value || '',
+                    options,
+                    onChange,
+                    placeholder: t('Select camera…'),
+                });
+            };
+
+            const renderTargetSelect = (value, onChange, ddId) => {
+                const options = targetsGlobal
+                    .filter(tg => tg && tg.id)
+                    .map(tg => ({ value: String(tg.id), label: formatTargetLabel(tg) }))
+                    .filter(o => o.value);
+
+                return renderDropdown({
+                    id: ddId || `target:${value || ''}`,
+                    value: value || '',
+                    options,
+                    onChange,
+                    placeholder: t('Select target…'),
+                });
             };
 
             return React.createElement(
@@ -548,26 +702,44 @@
                               React.createElement('input', { style: inputStyle, type: 'text', value: selectedItem.name || '', onChange: e => updateSelected('name', e.target.value) }),
 
                               React.createElement('label', { style: labelStyle }, t('Kind')),
-                              React.createElement(
-                                  'select',
-                                  { style: selectStyle, value: selectedItem.kind || 'notify', onChange: e => updateSelected('kind', e.target.value) },
-                                  React.createElement('option', { value: 'notify', style: optionStyle }, t('Notify (Discord/Telegram)')),
-                                  React.createElement('option', { value: 'device', style: optionStyle }, t('Device (switch)'))
-                              ),
+                              renderDropdown({
+                                  id: `kind:${selectedIndex}`,
+                                  value: selectedItem.kind || 'notify',
+                                  options: [
+                                      { value: 'notify', label: t('Notify (Discord/Telegram)') },
+                                      { value: 'device', label: t('Device (switch)') },
+                                  ],
+                                  onChange: v => updateSelected('kind', v),
+                                  placeholder: t('Select kind…'),
+                              }),
 
                               React.createElement('div', { style: { marginTop: 16, fontSize: 12, fontWeight: 700 } }, t('Cameras')),
                               React.createElement(
                                   'div',
                                   { style: { fontSize: 12, color: colors.textMuted } },
-                                  t('Optional: Add one or more cameras. If empty, the item applies to all cameras.')
+                                  (selectedItem.kind === 'device')
+                                      ? t('Optional: Add one or more cameras as a filter. If empty, the item applies to all cameras.')
+                                      : t('Optional: Add one or more cameras. If empty, the item applies to all cameras. You can override the target per camera.')
                               ),
                               React.createElement('button', { type: 'button', style: Object.assign({}, btnStyle, { marginTop: 8 }), onClick: addCameraRow }, t('Add camera')),
                               normalizeArray(selectedItem.cameras).map((c, idx) => {
+                                  const isNotifyKind = (selectedItem.kind || 'notify') === 'notify';
                                   return React.createElement(
                                       'div',
-                                      { key: idx, style: { display: 'grid', gridTemplateColumns: '220px 1fr 1fr 90px', gap: 8, alignItems: 'center', marginTop: 8 } },
-                                      renderCameraSelect(c && c.cameraId ? String(c.cameraId) : '', v => updateCameraRow(idx, 'cameraId', v)),
-                                      renderTargetSelect(c && c.targetId ? String(c.targetId) : '', v => updateCameraRow(idx, 'targetId', v)),
+                                      {
+                                          key: idx,
+                                          style: {
+                                              display: 'grid',
+                                              gridTemplateColumns: isNotifyKind ? '220px 1fr 1fr 90px' : '220px 1fr 90px',
+                                              gap: 8,
+                                              alignItems: 'center',
+                                              marginTop: 8,
+                                          },
+                                      },
+                                      renderCameraSelect(c && c.cameraId ? String(c.cameraId) : '', v => updateCameraRow(idx, 'cameraId', v), `camRow:${selectedIndex}:${idx}`),
+                                      isNotifyKind
+                                          ? renderTargetSelect(c && c.targetId ? String(c.targetId) : '', v => updateCameraRow(idx, 'targetId', v), `targetRow:${selectedIndex}:${idx}`)
+                                          : null,
                                       React.createElement('input', { style: inputStyle, type: 'text', value: (c && c.comment) || '', placeholder: t('Comment (optional)'), onChange: e => updateCameraRow(idx, 'comment', e.target.value) }),
                                       React.createElement('button', { type: 'button', style: btnDangerStyle, onClick: () => deleteCameraRow(idx) }, t('Delete'))
                                   );
@@ -607,24 +779,32 @@
                                   )
                               ),
 
-                              selectedItem.kind === 'notify'
-                                  ? React.createElement(
-                                        React.Fragment,
-                                        null,
+                              React.createElement(
+                                  'div',
+                                  { key: `kindPanel:${selectedItem.kind || 'notify'}` },
+                                  selectedItem.kind === 'notify'
+                                      ? React.createElement(
+                                            React.Fragment,
+                                            null,
                                         React.createElement('div', { style: { marginTop: 18, fontSize: 12, fontWeight: 700 } }, t('Notify')),
                                         React.createElement('label', { style: labelStyle }, t('Default target')),
-                                        renderTargetSelect(selectedItem.notify && selectedItem.notify.targetId ? String(selectedItem.notify.targetId) : '', v => updateSelectedPath('notify.targetId', v)),
+                                        renderTargetSelect(selectedItem.notify && selectedItem.notify.targetId ? String(selectedItem.notify.targetId) : '', v => updateSelectedPath('notify.targetId', v), `targetDefault:${selectedIndex}`),
                                         React.createElement('label', { style: labelStyle }, t('Media mode')),
-                                        React.createElement(
-                                            'select',
-                                            { style: selectStyle, value: (selectedItem.notify && selectedItem.notify.mediaMode) || 'clipFirst', onChange: e => updateSelectedPath('notify.mediaMode', e.target.value) },
-                                            React.createElement('option', { value: 'clipFirst', style: optionStyle }, t('Clip first (fallback snapshot)')),
-                                            React.createElement('option', { value: 'snapshotOnly', style: optionStyle }, t('Snapshot only'))
-                                        ),
+                                        renderDropdown({
+                                            id: `mediaMode:${selectedIndex}`,
+                                            value: (selectedItem.notify && selectedItem.notify.mediaMode) || 'clipFirst',
+                                            options: [
+                                                { value: 'clipFirst', label: t('Clip first (fallback snapshot)') },
+                                                { value: 'snapshotOnly', label: t('Snapshot only') },
+                                            ],
+                                            onChange: v => updateSelectedPath('notify.mediaMode', v),
+                                            placeholder: t('Select media mode…'),
+                                        }),
                                         React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
                                             React.createElement('div', null,
                                                 React.createElement('label', { style: labelStyle }, t('Clip padding (s)')),
-                                                React.createElement('input', { style: inputStyle, type: 'number', value: (selectedItem.notify && selectedItem.notify.clipPaddingSeconds) ?? 0, onChange: e => updateSelectedPath('notify.clipPaddingSeconds', Number(e.target.value)) })
+                                                React.createElement('input', { style: inputStyle, type: 'number', value: (selectedItem.notify && selectedItem.notify.clipPaddingSeconds) ?? 0, onChange: e => updateSelectedPath('notify.clipPaddingSeconds', Number(e.target.value)) }),
+                                                React.createElement('div', { style: { fontSize: 12, marginTop: 6, color: colors.textMuted } }, t('Adds seconds before/after the event when downloading a clip. Typical: 0–3. Increase if clips start too late or end too early.'))
                                             ),
                                             React.createElement('div', null,
                                                 React.createElement('label', { style: labelStyle }, t('Max upload (MB)')),
@@ -647,10 +827,10 @@
                                             React.createElement('input', { type: 'checkbox', checked: !!(selectedItem.notify && selectedItem.notify.clipFallbackToSnapshot), onChange: e => updateSelectedPath('notify.clipFallbackToSnapshot', !!e.target.checked) }),
                                             React.createElement('span', null, t('Fallback to snapshot'))
                                         )
-                                    )
-                                  : React.createElement(
-                                        React.Fragment,
-                                        null,
+                                        )
+                                      : React.createElement(
+                                            React.Fragment,
+                                            null,
                                         React.createElement('div', { style: { marginTop: 18, fontSize: 12, fontWeight: 700 } }, t('Device')),
                                         React.createElement('label', { style: labelStyle }, t('Target state id (switch)')),
                                         React.createElement(
@@ -708,7 +888,8 @@
                                                   )
                                               )
                                             : null
-                                    ),
+                                        )
+                              ),
                               renderStatePicker()
                           )
                         : React.createElement('div', { style: { opacity: 0.9, color: colors.textMuted } }, t('Select an item on the left or add a new one.'))
