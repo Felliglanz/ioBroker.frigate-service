@@ -65,6 +65,31 @@
         return Array.isArray(value) ? value : [];
     }
 
+    function detectThemeMode(props, theme) {
+        const candidates = [
+            props && (props.themeType || props.themeMode || props.themeName),
+            theme && theme.palette && theme.palette.mode,
+        ].filter(v => v === 'dark' || v === 'light');
+
+        if (candidates.length) return candidates[0];
+
+        try {
+            const cls = (globalThis.document && globalThis.document.body && globalThis.document.body.className) || '';
+            if (/\bdark\b/i.test(cls)) return 'dark';
+            if (/\blight\b/i.test(cls)) return 'light';
+        } catch {
+            // ignore
+        }
+
+        try {
+            if (globalThis.matchMedia && globalThis.matchMedia('(prefers-color-scheme: dark)').matches) return 'dark';
+        } catch {
+            // ignore
+        }
+
+        return 'light';
+    }
+
     function calcTitle(item, t) {
         const enabled = !!(item && item.enabled);
         const name = item && item.name ? String(item.name).trim() : '';
@@ -132,8 +157,7 @@
             const DialogSelectID = AdapterReact && (AdapterReact.DialogSelectID || AdapterReact.SelectID);
             const socket = (props && props.socket) || globalThis.socket || globalThis._socket || null;
             const theme = (props && props.theme) || null;
-            const themePalette = theme && theme.palette ? theme.palette : null;
-            const themeType = (themePalette && (themePalette.mode === 'dark' || themePalette.mode === 'light')) ? themePalette.mode : '';
+            const themeType = detectThemeMode(props, theme);
             const isDark = themeType === 'dark';
 
             const t = text => {
@@ -624,8 +648,7 @@
         return function FrigateServiceCameraDiscovery(props) {
             const socket = (props && props.socket) || globalThis.socket || globalThis._socket || null;
             const theme = (props && props.theme) || null;
-            const themePalette = theme && theme.palette ? theme.palette : null;
-            const themeType = (themePalette && (themePalette.mode === 'dark' || themePalette.mode === 'light')) ? themePalette.mode : '';
+            const themeType = detectThemeMode(props, theme);
             const isDark = themeType === 'dark';
 
             const colors = isDark

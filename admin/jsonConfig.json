@@ -1,9 +1,8 @@
 {
-  "type": "tabs",
   "i18n": true,
   "items": {
     "global": {
-      "type": "tab",
+      "type": "panel",
       "label": "Global",
       "items": {
         "frigateInstance": {
@@ -130,7 +129,7 @@
       }
     },
     "items": {
-      "type": "tab",
+      "type": "panel",
       "label": "Items",
       "items": {
         "items": {
