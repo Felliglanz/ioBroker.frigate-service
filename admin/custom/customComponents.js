@@ -838,3 +838,24 @@
 
     globalThis[REMOTE_NAME] = { get, init };
 })();
+
+// Admin 7+ loads custom components via dynamic `import(url)`.
+// In that case, the loader expects the remote entry to export `init` and `get`.
+// We keep the global container (above) and re-export wrappers for ESM import.
+export function init(scope) {
+    const container = globalThis.FrigateServiceUI;
+    if (!container || typeof container.init !== 'function') {
+        throw new Error('FrigateServiceUI remote container not initialized');
+    }
+    return container.init(scope);
+}
+
+export function get(module) {
+    const container = globalThis.FrigateServiceUI;
+    if (!container || typeof container.get !== 'function') {
+        return Promise.reject(new Error('FrigateServiceUI remote container not available'));
+    }
+    return container.get(module);
+}
+
+export default { init, get };
