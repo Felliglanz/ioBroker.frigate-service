@@ -49,21 +49,19 @@
         "cameras": {
           "type": "table",
           "label": "Cameras",
-          "newRow": {
-            "id": "",
-            "name": ""
-          },
           "items": [
             {
               "attr": "id",
               "type": "text",
               "title": "Camera key",
+              "default": "",
               "placeholder": "e.g. einfahrt"
             },
             {
               "attr": "name",
               "type": "text",
               "title": "Display name",
+              "default": "",
               "placeholder": "Einfahrt"
             }
           ]
@@ -73,31 +71,26 @@
           "type": "table",
           "label": "Notification targets",
           "help": "Sensitive fields are masked in the UI. For Frigate auth fields, encryption is enabled via encryptedNative.",
-          "newRow": {
-            "id": "",
-            "name": "",
-            "type": "discordWebhook",
-            "webhookUrl": "",
-            "botToken": "",
-            "chatId": ""
-          },
           "items": [
             {
               "attr": "id",
               "type": "text",
               "title": "Target id",
+              "default": "",
               "placeholder": "discord_haus"
             },
             {
               "attr": "name",
               "type": "text",
               "title": "Name",
+              "default": "",
               "placeholder": "Discord Haus"
             },
             {
               "attr": "type",
               "type": "select",
               "title": "Type",
+              "default": "discordWebhook",
               "options": [
                 { "label": "Discord webhook", "value": "discordWebhook" },
                 { "label": "Telegram bot", "value": "telegramBot" }
@@ -106,17 +99,20 @@
             {
               "attr": "webhookUrl",
               "type": "password",
-              "title": "Discord webhook URL"
+              "title": "Discord webhook URL",
+              "default": ""
             },
             {
               "attr": "botToken",
               "type": "password",
-              "title": "Telegram bot token"
+              "title": "Telegram bot token",
+              "default": ""
             },
             {
               "attr": "chatId",
               "type": "text",
-              "title": "Telegram chat id"
+              "title": "Telegram chat id",
+              "default": ""
             }
           ]
         }

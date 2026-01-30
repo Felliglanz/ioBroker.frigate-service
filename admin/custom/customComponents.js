@@ -154,6 +154,21 @@
             const DEFAULT_ITEMS_ATTR = 'items';
             const attr = (props && typeof props.attr === 'string' && props.attr) ? props.attr : DEFAULT_ITEMS_ATTR;
 
+            function sanitizeConfigObject(obj) {
+                if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return obj;
+                const out = {};
+                try {
+                    for (const [k, v] of Object.entries(obj)) {
+                        // Guard against accidental string-spread keys like {"0":"i","1":"t",...}
+                        if (/^\d+$/.test(k) && typeof v === 'string' && v.length === 1) continue;
+                        out[k] = v;
+                    }
+                } catch {
+                    return obj;
+                }
+                return out;
+            }
+
             const DialogSelectID = AdapterReact && (AdapterReact.DialogSelectID || AdapterReact.SelectID);
             const socket = (props && props.socket) || globalThis.socket || globalThis._socket || null;
             const theme = (props && props.theme) || null;
@@ -244,8 +259,10 @@
             }, [items.length, selectedIndex]);
 
             const applyItemsChange = safeItems => {
-                const nextData = (props && props.data && typeof props.data === 'object')
-                    ? Object.assign({}, props.data, { [DEFAULT_ITEMS_ATTR]: safeItems, [attr]: safeItems })
+                const baseDataRaw = (props && props.data) || null;
+                const baseData = sanitizeConfigObject(baseDataRaw);
+                const nextData = (baseData && typeof baseData === 'object' && !Array.isArray(baseData))
+                    ? Object.assign({}, baseData, { [DEFAULT_ITEMS_ATTR]: safeItems, [attr]: safeItems })
                     : { [DEFAULT_ITEMS_ATTR]: safeItems, [attr]: safeItems };
 
                 // Fast UI feedback even if parent update is async.
@@ -264,28 +281,29 @@
                 }
 
                 if (!applied && props && typeof props.onChange === 'function') {
-                    // Signature A: onChange(attr, value)
+                    // Signature B: onChange(newData, isChanged)
                     try {
-                        props.onChange(attr, safeItems);
+                        props.onChange(nextData, true);
                         applied = true;
                     } catch {
                         // ignore
-                    }
-
-                    // Signature B: onChange(newData, isChanged)
-                    if (!applied) {
-                        try {
-                            props.onChange(nextData, true);
-                            applied = true;
-                        } catch {
-                            // ignore
-                        }
                     }
 
                     // Signature C: onChange(newData)
                     if (!applied) {
                         try {
                             props.onChange(nextData);
+                            applied = true;
+                        } catch {
+                            // ignore
+                        }
+                    }
+
+                    // Signature A (legacy): onChange(attr, value)
+                    // WARNING: Calling this on Admin7 JsonConfig will corrupt the config (string spread into object).
+                    if (!applied) {
+                        try {
+                            props.onChange(attr, safeItems);
                             applied = true;
                         } catch {
                             // ignore
