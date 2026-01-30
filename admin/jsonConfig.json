@@ -1,0 +1,143 @@
+{
+  "type": "tabs",
+  "i18n": true,
+  "items": {
+    "global": {
+      "type": "tab",
+      "label": "Global",
+      "items": {
+        "frigateInstance": {
+          "type": "text",
+          "label": "Frigate instance",
+          "help": "ioBroker instance id of your Frigate adapter (e.g. frigate.0).",
+          "default": "frigate.0"
+        },
+        "frigateBaseUrl": {
+          "type": "text",
+          "label": "Frigate API base URL",
+          "help": "Base URL for Frigate HTTP API (e.g. http://192.168.1.10:5000). Leave empty if you only use adapter states (no media downloads).",
+          "default": ""
+        },
+        "frigateAuthType": {
+          "type": "select",
+          "label": "Frigate auth",
+          "options": [
+            { "label": "None", "value": "none" },
+            { "label": "Basic", "value": "basic" },
+            { "label": "Bearer", "value": "bearer" }
+          ],
+          "default": "none"
+        },
+        "frigateAuthUsername": {
+          "type": "text",
+          "label": "Frigate username",
+          "hidden": "data.frigateAuthType !== 'basic'"
+        },
+        "frigateAuthPassword": {
+          "type": "password",
+          "label": "Frigate password",
+          "hidden": "data.frigateAuthType !== 'basic'"
+        },
+        "frigateAuthBearerToken": {
+          "type": "password",
+          "label": "Frigate bearer token",
+          "hidden": "data.frigateAuthType !== 'bearer'"
+        },
+
+        "_divider1": { "type": "divider", "label": "" },
+
+        "cameraDiscovery": {
+          "type": "custom",
+          "label": "Camera discovery",
+          "component": "FrigateServiceCameraDiscovery"
+        },
+
+        "cameras": {
+          "type": "table",
+          "label": "Cameras",
+          "newRow": {
+            "id": "",
+            "name": ""
+          },
+          "items": [
+            {
+              "attr": "id",
+              "type": "text",
+              "title": "Camera key",
+              "placeholder": "e.g. einfahrt"
+            },
+            {
+              "attr": "name",
+              "type": "text",
+              "title": "Display name",
+              "placeholder": "Einfahrt"
+            }
+          ]
+        },
+
+        "notifyTargets": {
+          "type": "table",
+          "label": "Notification targets",
+          "help": "Sensitive fields are masked in the UI. For Frigate auth fields, encryption is enabled via encryptedNative.",
+          "newRow": {
+            "id": "",
+            "name": "",
+            "type": "discordWebhook",
+            "webhookUrl": "",
+            "botToken": "",
+            "chatId": ""
+          },
+          "items": [
+            {
+              "attr": "id",
+              "type": "text",
+              "title": "Target id",
+              "placeholder": "discord_haus"
+            },
+            {
+              "attr": "name",
+              "type": "text",
+              "title": "Name",
+              "placeholder": "Discord Haus"
+            },
+            {
+              "attr": "type",
+              "type": "select",
+              "title": "Type",
+              "options": [
+                { "label": "Discord webhook", "value": "discordWebhook" },
+                { "label": "Telegram bot", "value": "telegramBot" }
+              ]
+            },
+            {
+              "attr": "webhookUrl",
+              "type": "password",
+              "title": "Discord webhook URL"
+            },
+            {
+              "attr": "botToken",
+              "type": "password",
+              "title": "Telegram bot token"
+            },
+            {
+              "attr": "chatId",
+              "type": "text",
+              "title": "Telegram chat id"
+            }
+          ]
+        }
+      }
+    },
+    "items": {
+      "type": "tab",
+      "label": "Items",
+      "items": {
+        "items": {
+          "type": "custom",
+          "label": "Rules",
+          "component": "FrigateServiceItemsEditor"
+        }
+      }
+    }
+  }
+}

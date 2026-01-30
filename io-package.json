@@ -1,0 +1,57 @@
+{
+  "common": {
+    "name": "frigate-service",
+    "version": "0.0.1",
+    "news": {
+      "0.0.1": {
+        "en": "Initial development version",
+        "de": "Initiale Entwicklungsversion"
+      }
+    },
+    "titleLang": {
+      "en": "Frigate Service",
+      "de": "Frigate Service"
+    },
+    "desc": {
+      "en": "Event-based automations for ioBroker + Frigate (notifications and device control)",
+      "de": "Eventbasierte Automationen für ioBroker + Frigate (Benachrichtigungen und Geräte-Steuerung)"
+    },
+    "authors": [
+      ""
+    ],
+    "license": "MIT",
+    "platform": "Javascript/Node.js",
+    "mode": "daemon",
+    "compact": true,
+    "connectionType": "local",
+    "dataSource": "poll",
+    "enabled": true,
+    "extIcon": "admin/frigate-service.png",
+    "icon": "frigate-service.png",
+    "adminUI": {
+      "config": "json"
+    },
+    "encryptedNative": [
+      "frigateAuthPassword",
+      "frigateAuthBearerToken"
+    ],
+    "readme": "README.md",
+    "restartAdapters": [],
+    "dependencies": [],
+    "globalDependencies": []
+  },
+  "native": {
+    "frigateInstance": "frigate.0",
+    "frigateBaseUrl": "",
+    "frigateAuthType": "none",
+    "frigateAuthUsername": "",
+    "frigateAuthPassword": "",
+    "frigateAuthBearerToken": "",
+
+    "cameras": [],
+    "notifyTargets": [],
+    "items": []
+  },
+  "objects": [],
+  "instanceObjects": []
+}

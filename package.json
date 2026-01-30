@@ -1,0 +1,29 @@
+{
+  "name": "iobroker.frigate-service",
+  "version": "0.0.1",
+  "description": "Event-based automations for ioBroker + Frigate (notifications and device control)",
+  "author": "",
+  "license": "MIT",
+  "keywords": [
+    "iobroker",
+    "adapter",
+    "frigate",
+    "discord",
+    "telegram"
+  ],
+  "main": "main.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@iobroker/adapter-core": "^3.2.3",
+    "form-data": "^4.0.0"
+  },
+  "devDependencies": {
+    "@iobroker/testing": "^5.0.0"
+  },
+  "scripts": {
+    "test": "node -e \"console.log('no tests yet')\"",
+    "smoke": "node scripts/smoke-runtime.js"
+  }
+}
