@@ -256,7 +256,7 @@
                 overflowY: 'auto',
                 borderRadius: 6,
                 border: `1px solid ${colors.border}`,
-                background: colors.panelBg,
+                background: isDark ? '#1e1e1e' : '#ffffff',
                 boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.55)' : '0 10px 30px rgba(0,0,0,0.18)',
             };
 
@@ -266,7 +266,7 @@
                 justifyContent: 'space-between',
                 cursor: 'pointer',
                 userSelect: 'none',
-                backgroundColor: colors.panelBg,
+                backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
             });
 
             const rawItems = normalizeArray((props && props.data && (props.data[attr] || props.data.items)) || (props && props.data && props.data[DEFAULT_ITEMS_ATTR]) || []);
