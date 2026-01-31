@@ -46,69 +46,11 @@
 
         "_divider1": { "type": "divider", "label": "" },
 
-        "cameras": {
-          "type": "table",
-          "label": "Cameras",
-          "help": "Camera key must match frigate.0.events.after.camera (e.g. einfahrt). Display name is optional; if empty, the key will be shown prettified.",
-          "items": [
-            {
-              "attr": "id",
-              "type": "text",
-              "title": "Camera key",
-              "default": "",
-              "placeholder": "e.g. einfahrt"
-            },
-            {
-              "attr": "name",
-              "type": "text",
-              "title": "Display name",
-              "default": "",
-              "placeholder": "(optional) Einfahrt"
-            }
-          ]
-        },
-
-        "notifyTargets": {
-          "type": "table",
-          "label": "Notification targets",
-          "help": "Use a unique Target id (e.g. kamera_einfahrt). Sensitive fields are masked in the UI. For Frigate auth fields, encryption is enabled via encryptedNative.",
-          "items": [
-            {
-              "attr": "id",
-              "type": "text",
-              "title": "Target id",
-              "default": "",
-              "placeholder": "discord_haus"
-            },
-            {
-              "attr": "type",
-              "type": "select",
-              "title": "Type",
-              "default": "discordWebhook",
-              "options": [
-                { "label": "Discord webhook", "value": "discordWebhook" },
-                { "label": "Telegram bot", "value": "telegramBot" }
-              ]
-            },
-            {
-              "attr": "webhookUrl",
-              "type": "password",
-              "title": "Discord webhook URL",
-              "default": ""
-            },
-            {
-              "attr": "botToken",
-              "type": "password",
-              "title": "Telegram bot token",
-              "default": ""
-            },
-            {
-              "attr": "chatId",
-              "type": "text",
-              "title": "Telegram chat id",
-              "default": ""
-            }
-          ]
+        "_globalEditor": {
+          "type": "custom",
+          "label": "Cameras & Targets",
+          "url": "custom/customComponents.js",
+          "name": "FrigateServiceUI/Components/FrigateServiceGlobalEditor"
         }
       }
     },

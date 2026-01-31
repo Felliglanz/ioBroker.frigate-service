@@ -8,7 +8,7 @@
     'use strict';
 
     const REMOTE_NAME = 'FrigateServiceUI';
-    const UI_VERSION = '2026-01-31 20260131-3';
+    const UI_VERSION = '2026-01-31 20260131-4';
 
     let shareScope;
 
@@ -974,6 +974,334 @@
         };
     }
 
+    function createGlobalEditor(React, AdapterReact) {
+        return function FrigateServiceGlobalEditor(props) {
+            const DialogSelectID = AdapterReact && (AdapterReact.DialogSelectID || AdapterReact.SelectID);
+            const socket = (props && props.socket) || globalThis.socket || globalThis._socket || null;
+            const theme = (props && props.theme) || null;
+            const themeType = detectThemeMode(props, theme);
+            const isDark = themeType === 'dark';
+
+            const t = text => {
+                try {
+                    if (props && typeof props.t === 'function') return props.t(text);
+                } catch {
+                    // ignore
+                }
+                const I18n = (AdapterReact && AdapterReact.I18n) || globalThis.I18n || (globalThis.window && globalThis.window.I18n);
+                try {
+                    if (I18n && typeof I18n.t === 'function') return I18n.t(text);
+                } catch {
+                    // ignore
+                }
+                return text;
+            };
+
+            const colors = isDark
+                ? {
+                      panelBg: 'rgba(255,255,255,0.04)',
+                      panelBg2: 'rgba(255,255,255,0.03)',
+                      text: 'rgba(255,255,255,0.92)',
+                      textMuted: 'rgba(255,255,255,0.70)',
+                      border: 'rgba(255,255,255,0.16)',
+                      rowBorder: 'rgba(255,255,255,0.10)',
+                      hover: 'rgba(255,255,255,0.06)',
+                      active: 'rgba(255,255,255,0.10)',
+                      inputBg: 'rgba(255,255,255,0.06)'
+                  }
+                : {
+                      panelBg: '#ffffff',
+                      panelBg2: '#ffffff',
+                      text: '#111111',
+                      textMuted: 'rgba(0,0,0,0.70)',
+                      border: 'rgba(0,0,0,0.15)',
+                      rowBorder: 'rgba(0,0,0,0.10)',
+                      hover: 'rgba(0,0,0,0.05)',
+                      active: 'rgba(0,0,0,0.08)',
+                      inputBg: '#ffffff'
+                  };
+
+            const rootStyle = { display: 'flex', flexDirection: 'column', gap: 20, width: '100%', color: colors.text };
+            const sectionStyle = { display: 'flex', gap: 12, minHeight: 300, height: '50vh', position: 'relative', alignItems: 'stretch' };
+            const leftStyle = { width: 280, maxWidth: '35%', border: `1px solid ${colors.border}`, borderRadius: 6, overflow: 'hidden', display: 'flex', flexDirection: 'column', background: colors.panelBg };
+            const rightStyle = { flex: 1, border: `1px solid ${colors.border}`, borderRadius: 6, padding: 12, background: colors.panelBg2, overflow: 'auto' };
+            const toolbarStyle = { display: 'flex', gap: 8, padding: 10, borderBottom: `1px solid ${colors.rowBorder}`, flexWrap: 'wrap' };
+            const listStyle = { overflowY: 'auto', overflowX: 'hidden', flex: 1 };
+            const labelStyle = { display: 'block', fontSize: 12, color: colors.textMuted, marginTop: 10 };
+            const inputStyle = { width: '100%', padding: '8px 10px', borderRadius: 6, border: `1px solid ${colors.border}`, fontFamily: 'inherit', fontSize: 14, color: colors.text, background: colors.inputBg };
+            const btnStyle = { padding: '6px 10px', borderRadius: 6, border: `1px solid ${colors.border}`, background: 'transparent', cursor: 'pointer', color: colors.text };
+            const btnDangerStyle = Object.assign({}, btnStyle, { border: `1px solid ${isDark ? 'rgba(255,120,120,0.5)' : 'rgba(200,0,0,0.25)'}` });
+            const listBtnStyle = isActive => ({ width: '100%', textAlign: 'left', padding: '10px', border: 'none', borderBottom: `1px solid ${colors.rowBorder}`, background: isActive ? colors.active : 'transparent', cursor: 'pointer', color: colors.text });
+
+            const selectStyle = Object.assign({}, inputStyle, {
+                backgroundColor: colors.panelBg,
+                color: colors.text,
+                colorScheme: isDark ? 'dark' : 'light',
+                WebkitTextFillColor: colors.text,
+            });
+            const optionStyle = { background: colors.panelBg, color: colors.text };
+
+            const camerasRaw = normalizeArray((props && props.data && props.data.cameras) || []);
+            const targetsRaw = normalizeArray((props && props.data && props.data.notifyTargets) || []);
+
+            const [cameras, setCameras] = React.useState(camerasRaw);
+            const [targets, setTargets] = React.useState(targetsRaw);
+            const [selectedCameraIdx, setSelectedCameraIdx] = React.useState(0);
+            const [selectedTargetIdx, setSelectedTargetIdx] = React.useState(0);
+            const [selectContext, setSelectContext] = React.useState(null);
+
+            React.useEffect(() => {
+                setCameras(camerasRaw);
+            }, [camerasRaw.length]);
+
+            React.useEffect(() => {
+                setTargets(targetsRaw);
+            }, [targetsRaw.length]);
+
+            const applyChange = (key, value) => {
+                const nextData = Object.assign({}, (props && props.data) || {}, { [key]: value });
+                if (props && typeof props.onChange === 'function') {
+                    try {
+                        props.onChange(nextData, true);
+                    } catch {
+                        try {
+                            props.onChange(nextData);
+                        } catch {
+                            // ignore
+                        }
+                    }
+                }
+            };
+
+            const updateCameras = nextCameras => {
+                setCameras(nextCameras);
+                applyChange('cameras', nextCameras);
+            };
+
+            const updateTargets = nextTargets => {
+                setTargets(nextTargets);
+                applyChange('notifyTargets', nextTargets);
+            };
+
+            const selectedCamera = cameras[selectedCameraIdx] || null;
+            const selectedTarget = targets[selectedTargetIdx] || null;
+
+            const addCamera = () => {
+                const next = cameras.slice();
+                next.push({ id: '', name: '', zones: [] });
+                updateCameras(next);
+                setSelectedCameraIdx(next.length - 1);
+            };
+
+            const deleteCamera = () => {
+                if (!selectedCamera) return;
+                const next = cameras.slice();
+                next.splice(selectedCameraIdx, 1);
+                updateCameras(next);
+                setSelectedCameraIdx(Math.max(0, selectedCameraIdx - 1));
+            };
+
+            const updateCamera = (field, value) => {
+                const next = cameras.map((c, i) => (i === selectedCameraIdx ? Object.assign({}, c, { [field]: value }) : c));
+                updateCameras(next);
+            };
+
+            const addZoneToCamera = () => {
+                if (!selectedCamera) return;
+                const zones = normalizeArray(selectedCamera.zones).slice();
+                zones.push('');
+                updateCamera('zones', zones);
+            };
+
+            const updateCameraZone = (zoneIdx, value) => {
+                if (!selectedCamera) return;
+                const zones = normalizeArray(selectedCamera.zones).slice();
+                zones[zoneIdx] = value;
+                updateCamera('zones', zones);
+            };
+
+            const deleteCameraZone = zoneIdx => {
+                if (!selectedCamera) return;
+                const zones = normalizeArray(selectedCamera.zones).slice();
+                zones.splice(zoneIdx, 1);
+                updateCamera('zones', zones);
+            };
+
+            const addTarget = () => {
+                const next = targets.slice();
+                next.push({ id: '', type: 'discordWebhook', webhookUrl: '', botToken: '', chatId: '' });
+                updateTargets(next);
+                setSelectedTargetIdx(next.length - 1);
+            };
+
+            const deleteTarget = () => {
+                if (!selectedTarget) return;
+                const next = targets.slice();
+                next.splice(selectedTargetIdx, 1);
+                updateTargets(next);
+                setSelectedTargetIdx(Math.max(0, selectedTargetIdx - 1));
+            };
+
+            const updateTarget = (field, value) => {
+                const next = targets.map((t, i) => (i === selectedTargetIdx ? Object.assign({}, t, { [field]: value }) : t));
+                updateTargets(next);
+            };
+
+            const renderStatePicker = () => {
+                if (!selectContext || !(DialogSelectID && socket && theme)) return null;
+                return React.createElement(DialogSelectID, {
+                    key: 'selectStateGlobal',
+                    imagePrefix: '../..',
+                    dialogName: (props && (props.adapterName || props.adapter)) || 'frigate-service',
+                    theme: theme,
+                    themeType: themeType,
+                    socket: socket,
+                    types: 'state',
+                    selected: '',
+                    onClose: () => setSelectContext(null),
+                    onOk: sel => {
+                        const selectedStr = Array.isArray(sel) ? sel[0] : sel;
+                        setSelectContext(null);
+                        if (!selectedStr) return;
+                        if (selectContext.kind === 'cameraZone' && Number.isFinite(selectContext.zoneIdx)) {
+                            updateCameraZone(selectContext.zoneIdx, selectedStr);
+                        }
+                    }
+                });
+            };
+
+            return React.createElement(
+                'div',
+                { style: rootStyle },
+                React.createElement('div', { style: { fontSize: 16, fontWeight: 700, marginBottom: 8 } }, t('Cameras')),
+                React.createElement('div', { style: { fontSize: 12, color: colors.textMuted, marginBottom: 12 } },
+                    t('Define cameras with zones. Zones can be selected via state picker from Frigate adapter.')
+                ),
+                React.createElement(
+                    'div',
+                    { style: sectionStyle },
+                    React.createElement(
+                        'div',
+                        { style: leftStyle },
+                        React.createElement(
+                            'div',
+                            { style: toolbarStyle },
+                            React.createElement('button', { type: 'button', style: btnStyle, onClick: addCamera }, t('Add camera')),
+                            React.createElement('button', { type: 'button', style: btnDangerStyle, onClick: deleteCamera, disabled: !selectedCamera }, t('Delete'))
+                        ),
+                        React.createElement(
+                            'div',
+                            { style: listStyle },
+                            cameras.length
+                                ? cameras.map((cam, i) =>
+                                      React.createElement(
+                                          'button',
+                                          { key: i, type: 'button', style: listBtnStyle(i === selectedCameraIdx), onClick: () => setSelectedCameraIdx(i) },
+                                          cam.id || cam.name || t('Unnamed camera')
+                                      )
+                                  )
+                                : React.createElement('div', { style: { padding: 12, opacity: 0.9, color: colors.textMuted } }, t('No cameras configured.'))
+                        )
+                    ),
+                    React.createElement(
+                        'div',
+                        { style: rightStyle },
+                        selectedCamera
+                            ? React.createElement(
+                                  React.Fragment,
+                                  null,
+                                  React.createElement('div', { style: { fontSize: 14, fontWeight: 700, marginBottom: 12 } }, selectedCamera.id || selectedCamera.name || t('Camera details')),
+                                  React.createElement('label', { style: labelStyle }, t('Camera key (must match Frigate)')),
+                                  React.createElement('input', { style: inputStyle, type: 'text', value: selectedCamera.id || '', onChange: e => updateCamera('id', e.target.value), placeholder: 'e.g. einfahrt' }),
+                                  React.createElement('label', { style: labelStyle }, t('Display name (optional)')),
+                                  React.createElement('input', { style: inputStyle, type: 'text', value: selectedCamera.name || '', onChange: e => updateCamera('name', e.target.value), placeholder: 'e.g. Einfahrt' }),
+                                  React.createElement('div', { style: { marginTop: 16, fontSize: 12, fontWeight: 700, marginBottom: 8 } }, t('Zones')),
+                                  React.createElement('button', { type: 'button', style: btnStyle, onClick: addZoneToCamera }, t('Add zone')),
+                                  normalizeArray(selectedCamera.zones).map((z, zIdx) =>
+                                      React.createElement(
+                                          'div',
+                                          { key: zIdx, style: { display: 'grid', gridTemplateColumns: '1fr 90px 90px', gap: 8, alignItems: 'center', marginTop: 8 } },
+                                          React.createElement('input', { style: inputStyle, type: 'text', value: z || '', onChange: e => updateCameraZone(zIdx, e.target.value), placeholder: 'frigate.0.Zone_X.person' }),
+                                          React.createElement('button', { type: 'button', style: btnStyle, disabled: !(DialogSelectID && socket && theme), onClick: () => setSelectContext({ kind: 'cameraZone', zoneIdx: zIdx }) }, t('Select')),
+                                          React.createElement('button', { type: 'button', style: btnDangerStyle, onClick: () => deleteCameraZone(zIdx) }, t('Delete'))
+                                      )
+                                  )
+                              )
+                            : React.createElement('div', { style: { opacity: 0.9, color: colors.textMuted } }, t('Select a camera or add a new one.'))
+                    )
+                ),
+
+                React.createElement('div', { style: { fontSize: 16, fontWeight: 700, marginTop: 20, marginBottom: 8 } }, t('Notification targets')),
+                React.createElement('div', { style: { fontSize: 12, color: colors.textMuted, marginBottom: 12 } },
+                    t('Configure Discord webhooks or Telegram bots for notifications.')
+                ),
+                React.createElement(
+                    'div',
+                    { style: sectionStyle },
+                    React.createElement(
+                        'div',
+                        { style: leftStyle },
+                        React.createElement(
+                            'div',
+                            { style: toolbarStyle },
+                            React.createElement('button', { type: 'button', style: btnStyle, onClick: addTarget }, t('Add target')),
+                            React.createElement('button', { type: 'button', style: btnDangerStyle, onClick: deleteTarget, disabled: !selectedTarget }, t('Delete'))
+                        ),
+                        React.createElement(
+                            'div',
+                            { style: listStyle },
+                            targets.length
+                                ? targets.map((tg, i) =>
+                                      React.createElement(
+                                          'button',
+                                          { key: i, type: 'button', style: listBtnStyle(i === selectedTargetIdx), onClick: () => setSelectedTargetIdx(i) },
+                                          tg.id || t('Unnamed target')
+                                      )
+                                  )
+                                : React.createElement('div', { style: { padding: 12, opacity: 0.9, color: colors.textMuted } }, t('No targets configured.'))
+                        )
+                    ),
+                    React.createElement(
+                        'div',
+                        { style: rightStyle },
+                        selectedTarget
+                            ? React.createElement(
+                                  React.Fragment,
+                                  null,
+                                  React.createElement('div', { style: { fontSize: 14, fontWeight: 700, marginBottom: 12 } }, selectedTarget.id || t('Target details')),
+                                  React.createElement('label', { style: labelStyle }, t('Target id')),
+                                  React.createElement('input', { style: inputStyle, type: 'text', value: selectedTarget.id || '', onChange: e => updateTarget('id', e.target.value), placeholder: 'discord_haus' }),
+                                  React.createElement('label', { style: labelStyle }, t('Type')),
+                                  React.createElement(
+                                      'select',
+                                      { style: selectStyle, value: selectedTarget.type || 'discordWebhook', onChange: e => updateTarget('type', e.target.value) },
+                                      React.createElement('option', { value: 'discordWebhook', style: optionStyle }, t('Discord webhook')),
+                                      React.createElement('option', { value: 'telegramBot', style: optionStyle }, t('Telegram bot'))
+                                  ),
+                                  (selectedTarget.type === 'discordWebhook' || !selectedTarget.type)
+                                      ? React.createElement(
+                                            React.Fragment,
+                                            null,
+                                            React.createElement('label', { style: labelStyle }, t('Discord webhook URL')),
+                                            React.createElement('input', { style: inputStyle, type: 'password', value: selectedTarget.webhookUrl || '', onChange: e => updateTarget('webhookUrl', e.target.value), placeholder: 'https://discord.com/api/webhooks/...' })
+                                        )
+                                      : React.createElement(
+                                            React.Fragment,
+                                            null,
+                                            React.createElement('label', { style: labelStyle }, t('Telegram bot token')),
+                                            React.createElement('input', { style: inputStyle, type: 'password', value: selectedTarget.botToken || '', onChange: e => updateTarget('botToken', e.target.value), placeholder: '123456:ABC-DEF...' }),
+                                            React.createElement('label', { style: labelStyle }, t('Telegram chat id')),
+                                            React.createElement('input', { style: inputStyle, type: 'text', value: selectedTarget.chatId || '', onChange: e => updateTarget('chatId', e.target.value), placeholder: '-100123456789' })
+                                        )
+                              )
+                            : React.createElement('div', { style: { opacity: 0.9, color: colors.textMuted } }, t('Select a target or add a new one.'))
+                    )
+                ),
+                renderStatePicker()
+            );
+        };
+    }
+
     // Register immediately for Admin environments that only look at window.customComponents
     try {
         const ReactNow = globalThis.React;
@@ -981,6 +1309,7 @@
         if (ReactNow) {
             globalThis.customComponents = globalThis.customComponents || {};
             globalThis.customComponents.FrigateServiceItemsEditor = createItemsEditor(ReactNow, AdapterReactNow);
+            globalThis.customComponents.FrigateServiceGlobalEditor = createGlobalEditor(ReactNow, AdapterReactNow);
         }
     } catch {
         // ignore
@@ -992,15 +1321,17 @@
             const AdapterReact = await loadShared('@iobroker/adapter-react-v5');
             if (!React) throw new Error('FrigateService custom UI: React not available.');
             const FrigateServiceItemsEditor = createItemsEditor(React, AdapterReact);
+            const FrigateServiceGlobalEditor = createGlobalEditor(React, AdapterReact);
 
             try {
                 globalThis.customComponents = globalThis.customComponents || {};
                 globalThis.customComponents.FrigateServiceItemsEditor = FrigateServiceItemsEditor;
+                globalThis.customComponents.FrigateServiceGlobalEditor = FrigateServiceGlobalEditor;
             } catch {
                 // ignore
             }
 
-            return { default: { FrigateServiceItemsEditor } };
+            return { default: { FrigateServiceItemsEditor, FrigateServiceGlobalEditor } };
         },
         // Some Admin/federation runtimes request the module without leading './'
         'Components': async function () {
