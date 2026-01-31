@@ -8,7 +8,7 @@
     'use strict';
 
     const REMOTE_NAME = 'FrigateServiceUI';
-    const UI_VERSION = '2026-01-31 20260131-4';
+    const UI_VERSION = '2026-01-31 20260131-5';
 
     let shareScope;
 
@@ -649,6 +649,31 @@
                 });
             };
 
+            const renderZoneSelect = (value, onChange, ddId) => {
+                // Collect all zones from all cameras
+                const allZones = [];
+                camerasGlobal.forEach(cam => {
+                    const camZones = normalizeArray(cam.zones);
+                    const camLabel = formatCameraLabel(cam);
+                    camZones.forEach(zone => {
+                        if (zone && String(zone).trim()) {
+                            allZones.push({
+                                value: String(zone),
+                                label: camLabel ? `${camLabel}: ${zone}` : zone
+                            });
+                        }
+                    });
+                });
+
+                return renderDropdown({
+                    id: ddId || `zone:${value || ''}`,
+                    value: value || '',
+                    options: allZones,
+                    onChange,
+                    placeholder: t('Select zone…'),
+                });
+            };
+
             return React.createElement(
                 'div',
                 { style: rootStyle },
@@ -922,7 +947,7 @@
                                             React.createElement(
                                                 'div',
                                                 { key: idx, style: { display: 'grid', gridTemplateColumns: '1fr 90px 90px', gap: 8, alignItems: 'center', marginTop: 8 } },
-                                                React.createElement('input', { style: inputStyle, type: 'text', value: z || '', onChange: e => updateZone(idx, e.target.value), placeholder: 'frigate.0.Zone_X.person' }),
+                                                renderZoneSelect(z || '', v => updateZone(idx, v), `deviceZone:${selectedIndex}:${idx}`),
                                                 React.createElement('button', { type: 'button', style: btnStyle, disabled: !(DialogSelectID && socket && theme), onClick: () => setSelectContext({ kind: 'zone', index: idx }) }, t('Select')),
                                                 React.createElement('button', { type: 'button', style: btnDangerStyle, onClick: () => deleteZone(idx) }, t('Delete'))
                                             )

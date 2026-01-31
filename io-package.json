@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "frigate-service",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "news": {
+      "0.1.0": {
+        "en": "First public release with custom UI, zone management, and i18n support",
+        "de": "Erste öffentliche Version mit benutzerdefinierter UI, Zonenverwaltung und i18n-Unterstützung"
+      },
       "0.0.1": {
         "en": "Initial development version",
         "de": "Initiale Entwicklungsversion"
