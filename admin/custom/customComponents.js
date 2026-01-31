@@ -8,7 +8,7 @@
     'use strict';
 
     const REMOTE_NAME = 'FrigateServiceUI';
-    const UI_VERSION = '2026-01-31 20260131-5';
+    const UI_VERSION = '2026-01-31 20260131-6';
 
     let shareScope;
 
@@ -843,8 +843,8 @@
                                         { key: 'notifyPanel' },
                                         React.createElement('div', { style: { marginTop: 18, fontSize: 12, fontWeight: 700 } }, t('Notify')),
                                         React.createElement('label', { style: labelWithTooltipStyle },
-                                            React.createElement('span', null, t('Default target')),
-                                            React.createElement('span', { style: tooltipStyle, title: t('Where to send notifications (Discord/Telegram)') }, '❓')
+                                            React.createElement('span', null, t('Default target (fallback)')),
+                                            React.createElement('span', { style: tooltipStyle, title: t('Fallback target for cameras without specific target. Set camera-specific targets above in "Cameras" table.') }, '❓')
                                         ),
                                         renderTargetSelect(selectedItem.notify && selectedItem.notify.targetId ? String(selectedItem.notify.targetId) : '', v => updateSelectedPath('notify.targetId', v), `targetDefault:${selectedIndex}`),
                                         React.createElement('label', { style: labelWithTooltipStyle },

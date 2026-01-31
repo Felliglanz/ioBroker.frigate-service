@@ -49,6 +49,8 @@
   "Dedupe TTL (ms)": "Dedupe TTL (ms)",
   "Notify settings": "Notify settings",
   "Default target": "Default target",
+  "Default target (fallback)": "Default target (fallback)",
+  "Fallback target for cameras without specific target. Set camera-specific targets above in \"Cameras\" table.": "Fallback target for cameras without specific target. Set camera-specific targets above in \"Cameras\" table.",
   "Media mode": "Media mode",
   "Clip padding (s)": "Clip padding (s)",
   "Max upload size (MB)": "Max upload size (MB)",
