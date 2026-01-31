@@ -76,5 +76,6 @@
   "No cameras configured": "No cameras configured",
   "Please configure cameras in Global tab first": "Please configure cameras in Global tab first",
   "No zones available": "No zones available",
-  "Add detection zone": "Add detection zone"
+  "Add detection zone": "Add detection zone",
+  "URL must start with http:// or https://": "URL must start with http:// or https://"
 }
