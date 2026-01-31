@@ -957,12 +957,16 @@
                                                   React.createElement('span', { style: tooltipStyle, title: t('Control when device can be triggered. E.g., only at night or during specific hours.') }, '❓')
                                               ),
                                               React.createElement('label', { style: labelStyle }, t('Mode')),
-                                              React.createElement(
-                                                  'select',
-                                                  { style: selectStyle, value: (selectedItem.time && selectedItem.time.mode) || 'astroWindow', onChange: e => updateSelectedPath('time.mode', e.target.value) },
-                                                  React.createElement('option', { value: 'always', style: optionStyle }, t('Always')),
-                                                  React.createElement('option', { value: 'astroWindow', style: optionStyle }, t('Astro window (start/end states)'))
-                                              ),
+                                              renderDropdown({
+                                                  id: `timeMode:${selectedIndex}`,
+                                                  value: (selectedItem.time && selectedItem.time.mode) || 'astroWindow',
+                                                  options: [
+                                                      { value: 'always', label: t('Always') },
+                                                      { value: 'astroWindow', label: t('Astro window (start/end states)') },
+                                                  ],
+                                                  onChange: v => updateSelectedPath('time.mode', v),
+                                                  placeholder: t('Select mode…'),
+                                              }),
                                               (selectedItem.time && selectedItem.time.mode) === 'astroWindow'
                                                   ? React.createElement(
                                                         React.Fragment,
