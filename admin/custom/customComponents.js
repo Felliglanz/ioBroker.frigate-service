@@ -1066,6 +1066,40 @@
             });
             const optionStyle = { background: colors.panelBg, color: colors.text };
 
+            const dropdownItemStyle = isSelected => ({
+                padding: '8px 10px',
+                cursor: 'pointer',
+                background: isSelected ? colors.active : 'transparent',
+                color: colors.text,
+                borderBottom: `1px solid ${colors.rowBorder}`,
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+            });
+
+            const dropdownMenuStyle = {
+                position: 'absolute',
+                zIndex: 50,
+                left: 0,
+                right: 0,
+                top: 'calc(100% + 4px)',
+                maxHeight: 260,
+                overflowY: 'auto',
+                borderRadius: 6,
+                border: `1px solid ${colors.border}`,
+                background: isDark ? '#1e1e1e' : '#ffffff',
+                boxShadow: isDark ? '0 10px 30px rgba(0,0,0,0.55)' : '0 10px 30px rgba(0,0,0,0.18)',
+            };
+
+            const dropdownButtonStyle = Object.assign({}, inputStyle, {
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                cursor: 'pointer',
+                userSelect: 'none',
+                backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
+            });
+
             const camerasRaw = normalizeArray((props && props.data && props.data.cameras) || []);
             const targetsRaw = normalizeArray((props && props.data && props.data.notifyTargets) || []);
 
@@ -1074,6 +1108,32 @@
             const [selectedCameraIdx, setSelectedCameraIdx] = React.useState(0);
             const [selectedTargetIdx, setSelectedTargetIdx] = React.useState(0);
             const [selectContext, setSelectContext] = React.useState(null);
+            const [openDropdownId, setOpenDropdownId] = React.useState(null);
+
+            React.useEffect(() => {
+                const onDocClick = e => {
+                    try {
+                        const el = e && e.target;
+                        if (!el) return;
+                        if (el.closest && el.closest('[data-frigate-dd="1"]')) return;
+                    } catch {
+                        // ignore
+                    }
+                    setOpenDropdownId(null);
+                };
+                try {
+                    document.addEventListener('mousedown', onDocClick);
+                } catch {
+                    // ignore
+                }
+                return () => {
+                    try {
+                        document.removeEventListener('mousedown', onDocClick);
+                    } catch {
+                        // ignore
+                    }
+                };
+            }, []);
 
             React.useEffect(() => {
                 setCameras(camerasRaw);
@@ -1170,6 +1230,68 @@
             const updateTarget = (field, value) => {
                 const next = targets.map((t, i) => (i === selectedTargetIdx ? Object.assign({}, t, { [field]: value }) : t));
                 updateTargets(next);
+            };
+
+            const renderDropdown = ({ id, value, options, onChange, placeholder }) => {
+                const selected = options.find(o => o.value === (value || '')) || null;
+                const buttonText = selected ? selected.label : (placeholder || t('Select…'));
+                const isOpen = openDropdownId === id;
+
+                return React.createElement(
+                    'div',
+                    { style: { position: 'relative' }, 'data-frigate-dd': '1' },
+                    React.createElement(
+                        'div',
+                        {
+                            style: dropdownButtonStyle,
+                            role: 'button',
+                            tabIndex: 0,
+                            onClick: () => setOpenDropdownId(isOpen ? null : id),
+                            onKeyDown: e => {
+                                if (e.key === 'Enter' || e.key === ' ') {
+                                    e.preventDefault();
+                                    setOpenDropdownId(isOpen ? null : id);
+                                }
+                                if (e.key === 'Escape') setOpenDropdownId(null);
+                            },
+                            title: buttonText,
+                        },
+                        React.createElement('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis' } }, buttonText),
+                        React.createElement('span', { style: { opacity: 0.85, marginLeft: 8 } }, isOpen ? '▲' : '▼')
+                    ),
+                    isOpen
+                        ? React.createElement(
+                              'div',
+                              { style: dropdownMenuStyle },
+                              React.createElement(
+                                  'div',
+                                  {
+                                      style: dropdownItemStyle(!value),
+                                      onClick: () => {
+                                          setOpenDropdownId(null);
+                                          onChange('');
+                                      },
+                                  },
+                                  placeholder || t('Select…')
+                              ),
+                              options.map(o =>
+                                  React.createElement(
+                                      'div',
+                                      {
+                                          key: o.value,
+                                          style: dropdownItemStyle(o.value === value),
+                                          onClick: () => {
+                                              setOpenDropdownId(null);
+                                              onChange(o.value);
+                                          },
+                                          title: o.label,
+                                      },
+                                      o.label
+                                  )
+                              )
+                          )
+                        : null
+                );
             };
 
             const renderStatePicker = () => {
@@ -1297,12 +1419,16 @@
                                   React.createElement('label', { style: labelStyle }, t('Target id')),
                                   React.createElement('input', { style: inputStyle, type: 'text', value: selectedTarget.id || '', onChange: e => updateTarget('id', e.target.value), placeholder: 'discord_haus' }),
                                   React.createElement('label', { style: labelStyle }, t('Type')),
-                                  React.createElement(
-                                      'select',
-                                      { style: selectStyle, value: selectedTarget.type || 'discordWebhook', onChange: e => updateTarget('type', e.target.value) },
-                                      React.createElement('option', { value: 'discordWebhook', style: optionStyle }, t('Discord webhook')),
-                                      React.createElement('option', { value: 'telegramBot', style: optionStyle }, t('Telegram bot'))
-                                  ),
+                                  renderDropdown({
+                                      id: `targetType:${selectedTargetIdx}`,
+                                      value: selectedTarget.type || 'discordWebhook',
+                                      options: [
+                                          { value: 'discordWebhook', label: t('Discord webhook') },
+                                          { value: 'telegramBot', label: t('Telegram bot') },
+                                      ],
+                                      onChange: v => updateTarget('type', v),
+                                      placeholder: t('Select type…'),
+                                  }),
                                   (selectedTarget.type === 'discordWebhook' || !selectedTarget.type)
                                       ? React.createElement(
                                             React.Fragment,
