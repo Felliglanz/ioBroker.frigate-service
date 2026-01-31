@@ -8,7 +8,7 @@
     'use strict';
 
     const REMOTE_NAME = 'FrigateServiceUI';
-    const UI_VERSION = '2026-01-31 20260131-2';
+    const UI_VERSION = '2026-01-31 20260131-3';
 
     let shareScope;
 
@@ -718,19 +718,21 @@
                                   placeholder: t('Select kind…'),
                               }),
 
-                              React.createElement('div', { style: { marginTop: 16, fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 } },
-                                  React.createElement('span', null, t('Cameras')),
-                                  React.createElement('span', { style: tooltipStyle, title: t('Leave empty to apply to all cameras, or select specific cameras.') }, '❓')
-                              ),
-                              React.createElement(
-                                  'div',
-                                  { style: { fontSize: 11, color: colors.textMuted, marginBottom: 8 } },
-                                  (selectedItem.kind === 'device')
-                                      ? t('Optional: Filter by specific cameras')
-                                      : t('Optional: Override notification target per camera')
-                              ),
-                              React.createElement('button', { type: 'button', style: Object.assign({}, btnStyle, { marginTop: 8 }), onClick: addCameraRow }, t('Add camera')),
-                              normalizeArray(selectedItem.cameras).map((c, idx) => {
+                              (selectedItem.kind === 'notify' || !selectedItem.kind)
+                                  ? React.createElement(
+                                      React.Fragment,
+                                      null,
+                                      React.createElement('div', { style: { marginTop: 16, fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 } },
+                                          React.createElement('span', null, t('Cameras')),
+                                          React.createElement('span', { style: tooltipStyle, title: t('Leave empty to apply to all cameras, or select specific cameras.') }, '❓')
+                                      ),
+                                      React.createElement(
+                                          'div',
+                                          { style: { fontSize: 11, color: colors.textMuted, marginBottom: 8 } },
+                                          t('Optional: Override notification target per camera')
+                                      ),
+                                      React.createElement('button', { type: 'button', style: Object.assign({}, btnStyle, { marginTop: 8 }), onClick: addCameraRow }, t('Add camera')),
+                                      normalizeArray(selectedItem.cameras).map((c, idx) => {
                                   const isNotifyKind = (selectedItem.kind || 'notify') === 'notify';
                                   return React.createElement(
                                       'div',
@@ -751,9 +753,15 @@
                                       React.createElement('input', { style: inputStyle, type: 'text', value: (c && c.comment) || '', placeholder: t('Comment (optional)'), onChange: e => updateCameraRow(idx, 'comment', e.target.value) }),
                                       React.createElement('button', { type: 'button', style: btnDangerStyle, onClick: () => deleteCameraRow(idx) }, t('Delete'))
                                   );
-                              }),
+                              })
+                                  )
+                                  : null,
 
-                              React.createElement('div', { style: { marginTop: 18, fontSize: 12, fontWeight: 700 } }, t('Filter')),
+                              (selectedItem.kind === 'notify' || !selectedItem.kind)
+                                  ? React.createElement(
+                                      React.Fragment,
+                                      null,
+                                      React.createElement('div', { style: { marginTop: 18, fontSize: 12, fontWeight: 700 } }, t('Filter')),
                               React.createElement('label', { style: labelWithTooltipStyle },
                                   React.createElement('span', null, t('Event types')),
                                   React.createElement('span', { style: tooltipStyle, title: t('Comma-separated. Common: new, update, end. Typical: end') }, '❓')
@@ -800,7 +808,9 @@
                                       ),
                                       React.createElement('input', { style: inputStyle, type: 'number', placeholder: '600000', value: (selectedItem.filter && selectedItem.filter.dedupeTtlMs) ?? 600000, onChange: e => updateSelectedPath('filter.dedupeTtlMs', Number(e.target.value)) })
                                   )
-                              ),
+                              )
+                                  )
+                                  : null,
 
                               (selectedItem.kind === 'notify' || !selectedItem.kind)
                                   ? React.createElement(
@@ -870,10 +880,13 @@
                                       ? React.createElement(
                                               'div',
                                               { key: 'devicePanel' },
-                                              React.createElement('div', { style: { marginTop: 18, fontSize: 12, fontWeight: 700 } }, t('Device')),
+                                              React.createElement('div', { style: { marginTop: 18, fontSize: 12, fontWeight: 700, marginBottom: 8 } }, t('Device Control')),
+                                              React.createElement('div', { style: { fontSize: 11, color: colors.textMuted, marginBottom: 12, padding: '8px', background: isDark ? 'rgba(100,150,255,0.1)' : 'rgba(100,150,255,0.05)', borderRadius: 4, borderLeft: `3px solid ${isDark ? 'rgba(100,150,255,0.5)' : 'rgba(100,150,255,0.3)'}` } },
+                                                  t('Controls a device (lamp, switch) based on person detection in zones. Similar to scripted automation but automated via adapter.')
+                                              ),
                                               React.createElement('label', { style: labelWithTooltipStyle },
-                                                  React.createElement('span', null, t('Target state id (switch)')),
-                                                  React.createElement('span', { style: tooltipStyle, title: t('ioBroker state ID to control (e.g., switch, lamp). Will be set to true on detection.') }, '❓')
+                                                  React.createElement('span', null, t('Target state (lamp/switch)')),
+                                                  React.createElement('span', { style: tooltipStyle, title: t('ioBroker state to control, e.g., hue.0.Lamp.on - will be set to true when person detected in zones during time window.') }, '❓')
                                               ),
                                               React.createElement(
                                                   'div',
@@ -898,10 +911,13 @@
                                                   )
                                               ),
                                               React.createElement('div', { style: { marginTop: 14, fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 } },
-                                                  React.createElement('span', null, t('Zones (person counters)')),
-                                                  React.createElement('span', { style: tooltipStyle, title: t('Optional: Only trigger device if person is in specific zone(s). Requires zone counter states.') }, '❓')
+                                                  React.createElement('span', null, t('Detection Zones')),
+                                                  React.createElement('span', { style: tooltipStyle, title: t('Add Frigate zone person counters (e.g., frigate.0.Zone_Haustuer.person). Device triggers when ANY zone detects a person.') }, '❓')
                                               ),
-                                              React.createElement('button', { type: 'button', style: Object.assign({}, btnStyle, { marginTop: 8 }), onClick: addZone }, t('Add zone')),
+                                              React.createElement('div', { style: { fontSize: 11, color: colors.textMuted, marginTop: 4, marginBottom: 8 } },
+                                                  t('Add one or more Frigate zones. Device activates when person detected in ANY zone.')
+                                              ),
+                                              React.createElement('button', { type: 'button', style: Object.assign({}, btnStyle, { marginTop: 4 }), onClick: addZone }, t('Add zone')),
                                         normalizeArray(selectedItem.zones).map((z, idx) =>
                                             React.createElement(
                                                 'div',
