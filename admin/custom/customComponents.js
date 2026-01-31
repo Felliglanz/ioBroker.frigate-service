@@ -8,7 +8,7 @@
     'use strict';
 
     const REMOTE_NAME = 'FrigateServiceUI';
-    const UI_VERSION = '2026-01-31 20260131-1';
+    const UI_VERSION = '2026-01-31 20260131-2';
 
     let shareScope;
 
@@ -220,6 +220,8 @@
             const toolbarStyle = { display: 'flex', gap: 8, padding: 10, borderBottom: `1px solid ${colors.rowBorder}`, flexWrap: 'wrap' };
             const listStyle = { overflowY: 'auto', overflowX: 'hidden', flex: 1 };
             const labelStyle = { display: 'block', fontSize: 12, color: colors.textMuted, marginTop: 10 };
+            const labelWithTooltipStyle = { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: colors.textMuted, marginTop: 10 };
+            const tooltipStyle = { cursor: 'help', opacity: 0.6, fontSize: 11 };
             const inputStyle = { width: '100%', padding: '8px 10px', borderRadius: 6, border: `1px solid ${colors.border}`, fontFamily: 'inherit', fontSize: 14, color: colors.text, background: colors.inputBg };
             const btnStyle = { padding: '6px 10px', borderRadius: 6, border: `1px solid ${colors.border}`, background: 'transparent', cursor: 'pointer', color: colors.text };
             const btnDangerStyle = Object.assign({}, btnStyle, { border: `1px solid ${isDark ? 'rgba(255,120,120,0.5)' : 'rgba(200,0,0,0.25)'}` });
@@ -701,7 +703,10 @@
                               React.createElement('label', { style: labelStyle }, t('Name')),
                               React.createElement('input', { style: inputStyle, type: 'text', value: selectedItem.name || '', onChange: e => updateSelected('name', e.target.value) }),
 
-                              React.createElement('label', { style: labelStyle }, t('Kind')),
+                              React.createElement('label', { style: labelWithTooltipStyle },
+                                  React.createElement('span', null, t('Kind')),
+                                  React.createElement('span', { style: tooltipStyle, title: t('Notify: Send messages to Discord/Telegram. Device: Control a switch/device based on detections.') }, '❓')
+                              ),
                               renderDropdown({
                                   id: `kind:${selectedIndex}`,
                                   value: selectedItem.kind || 'notify',
@@ -713,13 +718,16 @@
                                   placeholder: t('Select kind…'),
                               }),
 
-                              React.createElement('div', { style: { marginTop: 16, fontSize: 12, fontWeight: 700 } }, t('Cameras')),
+                              React.createElement('div', { style: { marginTop: 16, fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 } },
+                                  React.createElement('span', null, t('Cameras')),
+                                  React.createElement('span', { style: tooltipStyle, title: t('Leave empty to apply to all cameras, or select specific cameras.') }, '❓')
+                              ),
                               React.createElement(
                                   'div',
-                                  { style: { fontSize: 12, color: colors.textMuted } },
+                                  { style: { fontSize: 11, color: colors.textMuted, marginBottom: 8 } },
                                   (selectedItem.kind === 'device')
-                                      ? t('Optional: Add one or more cameras as a filter. If empty, the item applies to all cameras.')
-                                      : t('Optional: Add one or more cameras. If empty, the item applies to all cameras. You can override the target per camera.')
+                                      ? t('Optional: Filter by specific cameras')
+                                      : t('Optional: Override notification target per camera')
                               ),
                               React.createElement('button', { type: 'button', style: Object.assign({}, btnStyle, { marginTop: 8 }), onClick: addCameraRow }, t('Add camera')),
                               normalizeArray(selectedItem.cameras).map((c, idx) => {
@@ -746,16 +754,25 @@
                               }),
 
                               React.createElement('div', { style: { marginTop: 18, fontSize: 12, fontWeight: 700 } }, t('Filter')),
-                              React.createElement('label', { style: labelStyle }, t('Event types (comma-separated)')),
-                              React.createElement('input', { style: inputStyle, type: 'text', value: (selectedItem.filter && selectedItem.filter.types ? selectedItem.filter.types.join(',') : 'end'), onChange: e => updateSelectedPath('filter.types', String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean)) }),
+                              React.createElement('label', { style: labelWithTooltipStyle },
+                                  React.createElement('span', null, t('Event types')),
+                                  React.createElement('span', { style: tooltipStyle, title: t('Comma-separated. Common: new, update, end. Typical: end') }, '❓')
+                              ),
+                              React.createElement('input', { style: inputStyle, type: 'text', placeholder: 'end', value: (selectedItem.filter && selectedItem.filter.types ? selectedItem.filter.types.join(',') : 'end'), onChange: e => updateSelectedPath('filter.types', String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean)) }),
                               React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
                                   React.createElement('div', null,
-                                      React.createElement('label', { style: labelStyle }, t('Label')),
-                                      React.createElement('input', { style: inputStyle, type: 'text', value: (selectedItem.filter && selectedItem.filter.label) || 'person', onChange: e => updateSelectedPath('filter.label', e.target.value) })
+                                      React.createElement('label', { style: labelWithTooltipStyle },
+                                          React.createElement('span', null, t('Label')),
+                                          React.createElement('span', { style: tooltipStyle, title: t('Object type to detect (person, car, dog, cat, etc.)') }, '❓')
+                                      ),
+                                      React.createElement('input', { style: inputStyle, type: 'text', placeholder: 'person', value: (selectedItem.filter && selectedItem.filter.label) || 'person', onChange: e => updateSelectedPath('filter.label', e.target.value) })
                                   ),
                                   React.createElement('div', null,
-                                      React.createElement('label', { style: labelStyle }, t('Min score')),
-                                      React.createElement('input', { style: inputStyle, type: 'number', step: '0.01', value: (selectedItem.filter && selectedItem.filter.minScore) ?? 0.8, onChange: e => updateSelectedPath('filter.minScore', Number(e.target.value)) })
+                                      React.createElement('label', { style: labelWithTooltipStyle },
+                                          React.createElement('span', null, t('Min score')),
+                                          React.createElement('span', { style: tooltipStyle, title: t('Minimum confidence score (0.0-1.0). Higher = fewer false positives.') }, '❓')
+                                      ),
+                                      React.createElement('input', { style: inputStyle, type: 'number', step: '0.01', placeholder: '0.8', value: (selectedItem.filter && selectedItem.filter.minScore) ?? 0.8, onChange: e => updateSelectedPath('filter.minScore', Number(e.target.value)) })
                                   )
                               ),
                               React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
@@ -770,26 +787,35 @@
                               ),
                               React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
                                   React.createElement('div', null,
-                                      React.createElement('label', { style: labelStyle }, t('Throttle (ms)')),
-                                      React.createElement('input', { style: inputStyle, type: 'number', value: (selectedItem.filter && selectedItem.filter.throttleMs) ?? 30000, onChange: e => updateSelectedPath('filter.throttleMs', Number(e.target.value)) })
+                                      React.createElement('label', { style: labelWithTooltipStyle },
+                                          React.createElement('span', null, t('Throttle (ms)')),
+                                          React.createElement('span', { style: tooltipStyle, title: t('Minimum time between actions. Prevents spamming.') }, '❓')
+                                      ),
+                                      React.createElement('input', { style: inputStyle, type: 'number', placeholder: '30000', value: (selectedItem.filter && selectedItem.filter.throttleMs) ?? 30000, onChange: e => updateSelectedPath('filter.throttleMs', Number(e.target.value)) })
                                   ),
                                   React.createElement('div', null,
-                                      React.createElement('label', { style: labelStyle }, t('Dedupe TTL (ms)')),
-                                      React.createElement('input', { style: inputStyle, type: 'number', value: (selectedItem.filter && selectedItem.filter.dedupeTtlMs) ?? 600000, onChange: e => updateSelectedPath('filter.dedupeTtlMs', Number(e.target.value)) })
+                                      React.createElement('label', { style: labelWithTooltipStyle },
+                                          React.createElement('span', null, t('Dedupe TTL (ms)')),
+                                          React.createElement('span', { style: tooltipStyle, title: t('Time window for duplicate detection. Longer = fewer duplicates.') }, '❓')
+                                      ),
+                                      React.createElement('input', { style: inputStyle, type: 'number', placeholder: '600000', value: (selectedItem.filter && selectedItem.filter.dedupeTtlMs) ?? 600000, onChange: e => updateSelectedPath('filter.dedupeTtlMs', Number(e.target.value)) })
                                   )
                               ),
 
-                              React.createElement(
-                                  'div',
-                                  { key: `kindPanel:${selectedItem.kind || 'notify'}` },
-                                  selectedItem.kind === 'notify'
-                                      ? React.createElement(
-                                            React.Fragment,
-                                            null,
+                              (selectedItem.kind === 'notify' || !selectedItem.kind)
+                                  ? React.createElement(
+                                        'div',
+                                        { key: 'notifyPanel' },
                                         React.createElement('div', { style: { marginTop: 18, fontSize: 12, fontWeight: 700 } }, t('Notify')),
-                                        React.createElement('label', { style: labelStyle }, t('Default target')),
+                                        React.createElement('label', { style: labelWithTooltipStyle },
+                                            React.createElement('span', null, t('Default target')),
+                                            React.createElement('span', { style: tooltipStyle, title: t('Where to send notifications (Discord/Telegram)') }, '❓')
+                                        ),
                                         renderTargetSelect(selectedItem.notify && selectedItem.notify.targetId ? String(selectedItem.notify.targetId) : '', v => updateSelectedPath('notify.targetId', v), `targetDefault:${selectedIndex}`),
-                                        React.createElement('label', { style: labelStyle }, t('Media mode')),
+                                        React.createElement('label', { style: labelWithTooltipStyle },
+                                            React.createElement('span', null, t('Media mode')),
+                                            React.createElement('span', { style: tooltipStyle, title: t('Clip: Send video clip. Snapshot: Send image only.') }, '❓')
+                                        ),
                                         renderDropdown({
                                             id: `mediaMode:${selectedIndex}`,
                                             value: (selectedItem.notify && selectedItem.notify.mediaMode) || 'clipFirst',
@@ -802,55 +828,80 @@
                                         }),
                                         React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
                                             React.createElement('div', null,
-                                                React.createElement('label', { style: labelStyle }, t('Clip padding (s)')),
-                                                React.createElement('input', { style: inputStyle, type: 'number', value: (selectedItem.notify && selectedItem.notify.clipPaddingSeconds) ?? 0, onChange: e => updateSelectedPath('notify.clipPaddingSeconds', Number(e.target.value)) }),
-                                                React.createElement('div', { style: { fontSize: 12, marginTop: 6, color: colors.textMuted } }, t('Adds seconds before/after the event when downloading a clip. Typical: 0–3. Increase if clips start too late or end too early.'))
+                                                React.createElement('label', { style: labelWithTooltipStyle },
+                                                    React.createElement('span', null, t('Clip padding (s)')),
+                                                    React.createElement('span', { style: tooltipStyle, title: t('Adds seconds before/after event. Typical: 0-3. Increase if clips start too late or end too early.') }, '❓')
+                                                ),
+                                                React.createElement('input', { style: inputStyle, type: 'number', placeholder: '0', value: (selectedItem.notify && selectedItem.notify.clipPaddingSeconds) ?? 0, onChange: e => updateSelectedPath('notify.clipPaddingSeconds', Number(e.target.value)) })
                                             ),
                                             React.createElement('div', null,
-                                                React.createElement('label', { style: labelStyle }, t('Max upload (MB)')),
-                                                React.createElement('input', { style: inputStyle, type: 'number', value: (selectedItem.notify && selectedItem.notify.maxUploadMb) ?? 8, onChange: e => updateSelectedPath('notify.maxUploadMb', Number(e.target.value)) })
+                                                React.createElement('label', { style: labelWithTooltipStyle },
+                                                    React.createElement('span', null, t('Max upload (MB)')),
+                                                    React.createElement('span', { style: tooltipStyle, title: t('Maximum file size for uploads. Discord: max 8-25 MB depending on server boost.') }, '❓')
+                                                ),
+                                                React.createElement('input', { style: inputStyle, type: 'number', placeholder: '8', value: (selectedItem.notify && selectedItem.notify.maxUploadMb) ?? 8, onChange: e => updateSelectedPath('notify.maxUploadMb', Number(e.target.value)) })
                                             )
                                         ),
                                         React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
                                             React.createElement('div', null,
-                                                React.createElement('label', { style: labelStyle }, t('Clip initial delay (ms)')),
-                                                React.createElement('input', { style: inputStyle, type: 'number', value: (selectedItem.notify && selectedItem.notify.clipInitialDelayMs) ?? 5000, onChange: e => updateSelectedPath('notify.clipInitialDelayMs', Number(e.target.value)) })
+                                                React.createElement('label', { style: labelWithTooltipStyle },
+                                                    React.createElement('span', null, t('Clip initial delay (ms)')),
+                                                    React.createElement('span', { style: tooltipStyle, title: t('Wait time before first clip download attempt. Gives Frigate time to create the clip.') }, '❓')
+                                                ),
+                                                React.createElement('input', { style: inputStyle, type: 'number', placeholder: '5000', value: (selectedItem.notify && selectedItem.notify.clipInitialDelayMs) ?? 5000, onChange: e => updateSelectedPath('notify.clipInitialDelayMs', Number(e.target.value)) })
                                             ),
                                             React.createElement('div', null,
-                                                React.createElement('label', { style: labelStyle }, t('Clip retries')),
-                                                React.createElement('input', { style: inputStyle, type: 'number', value: (selectedItem.notify && selectedItem.notify.clipFetchRetries) ?? 3, onChange: e => updateSelectedPath('notify.clipFetchRetries', Number(e.target.value)) })
+                                                React.createElement('label', { style: labelWithTooltipStyle },
+                                                    React.createElement('span', null, t('Clip retries')),
+                                                    React.createElement('span', { style: tooltipStyle, title: t('Number of retry attempts if clip download fails.') }, '❓')
+                                                ),
+                                                React.createElement('input', { style: inputStyle, type: 'number', placeholder: '3', value: (selectedItem.notify && selectedItem.notify.clipFetchRetries) ?? 3, onChange: e => updateSelectedPath('notify.clipFetchRetries', Number(e.target.value)) })
                                             )
                                         ),
                                         React.createElement(
                                             'label',
                                             { style: { display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 } },
                                             React.createElement('input', { type: 'checkbox', checked: !!(selectedItem.notify && selectedItem.notify.clipFallbackToSnapshot), onChange: e => updateSelectedPath('notify.clipFallbackToSnapshot', !!e.target.checked) }),
-                                            React.createElement('span', null, t('Fallback to snapshot'))
+                                            React.createElement('span', null, t('Fallback to snapshot')),
+                                            React.createElement('span', { style: tooltipStyle, title: t('Send snapshot if clip download fails.') }, '❓')
                                         )
-                                        )
-                                      : React.createElement(
-                                            React.Fragment,
-                                            null,
-                                        React.createElement('div', { style: { marginTop: 18, fontSize: 12, fontWeight: 700 } }, t('Device')),
-                                        React.createElement('label', { style: labelStyle }, t('Target state id (switch)')),
-                                        React.createElement(
-                                            'div',
-                                            { style: { display: 'flex', gap: 8, alignItems: 'center' } },
-                                            React.createElement('input', { style: Object.assign({}, inputStyle, { flex: 1 }), type: 'text', value: (selectedItem.device && selectedItem.device.targetStateId) || '', onChange: e => updateSelectedPath('device.targetStateId', e.target.value), placeholder: 'hue.0.someLamp.on' }),
-                                            React.createElement('button', { type: 'button', style: btnStyle, disabled: !(DialogSelectID && socket && theme), onClick: () => setSelectContext({ kind: 'deviceTarget' }) }, t('Select'))
-                                        ),
-                                        React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
-                                            React.createElement('div', null,
-                                                React.createElement('label', { style: labelStyle }, t('Off delay (ms)')),
-                                                React.createElement('input', { style: inputStyle, type: 'number', value: (selectedItem.device && selectedItem.device.offDelayMs) ?? 30000, onChange: e => updateSelectedPath('device.offDelayMs', Number(e.target.value)) })
-                                            ),
-                                            React.createElement('div', null,
-                                                React.createElement('label', { style: labelStyle }, t('Safety check interval (ms)')),
-                                                React.createElement('input', { style: inputStyle, type: 'number', value: (selectedItem.device && selectedItem.device.safetyCheckIntervalMs) ?? 60000, onChange: e => updateSelectedPath('device.safetyCheckIntervalMs', Number(e.target.value)) })
-                                            )
-                                        ),
-                                        React.createElement('div', { style: { marginTop: 14, fontSize: 12, fontWeight: 700 } }, t('Zones (person counters)')),
-                                        React.createElement('button', { type: 'button', style: Object.assign({}, btnStyle, { marginTop: 8 }), onClick: addZone }, t('Add zone')),
+                                    )
+                                  : (selectedItem.kind === 'device'
+                                      ? React.createElement(
+                                              'div',
+                                              { key: 'devicePanel' },
+                                              React.createElement('div', { style: { marginTop: 18, fontSize: 12, fontWeight: 700 } }, t('Device')),
+                                              React.createElement('label', { style: labelWithTooltipStyle },
+                                                  React.createElement('span', null, t('Target state id (switch)')),
+                                                  React.createElement('span', { style: tooltipStyle, title: t('ioBroker state ID to control (e.g., switch, lamp). Will be set to true on detection.') }, '❓')
+                                              ),
+                                              React.createElement(
+                                                  'div',
+                                                  { style: { display: 'flex', gap: 8, alignItems: 'center' } },
+                                                  React.createElement('input', { style: Object.assign({}, inputStyle, { flex: 1 }), type: 'text', value: (selectedItem.device && selectedItem.device.targetStateId) || '', onChange: e => updateSelectedPath('device.targetStateId', e.target.value), placeholder: 'hue.0.someLamp.on' }),
+                                                  React.createElement('button', { type: 'button', style: btnStyle, disabled: !(DialogSelectID && socket && theme), onClick: () => setSelectContext({ kind: 'deviceTarget' }) }, t('Select'))
+                                              ),
+                                              React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
+                                                  React.createElement('div', null,
+                                                      React.createElement('label', { style: labelWithTooltipStyle },
+                                                          React.createElement('span', null, t('Off delay (ms)')),
+                                                          React.createElement('span', { style: tooltipStyle, title: t('Time to wait before turning device off after last detection.') }, '❓')
+                                                      ),
+                                                      React.createElement('input', { style: inputStyle, type: 'number', placeholder: '30000', value: (selectedItem.device && selectedItem.device.offDelayMs) ?? 30000, onChange: e => updateSelectedPath('device.offDelayMs', Number(e.target.value)) })
+                                                  ),
+                                                  React.createElement('div', null,
+                                                      React.createElement('label', { style: labelWithTooltipStyle },
+                                                          React.createElement('span', null, t('Safety check interval (ms)')),
+                                                          React.createElement('span', { style: tooltipStyle, title: t('Interval to verify device state. Ensures correct state if manual changes occur.') }, '❓')
+                                                      ),
+                                                      React.createElement('input', { style: inputStyle, type: 'number', placeholder: '60000', value: (selectedItem.device && selectedItem.device.safetyCheckIntervalMs) ?? 60000, onChange: e => updateSelectedPath('device.safetyCheckIntervalMs', Number(e.target.value)) })
+                                                  )
+                                              ),
+                                              React.createElement('div', { style: { marginTop: 14, fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 } },
+                                                  React.createElement('span', null, t('Zones (person counters)')),
+                                                  React.createElement('span', { style: tooltipStyle, title: t('Optional: Only trigger device if person is in specific zone(s). Requires zone counter states.') }, '❓')
+                                              ),
+                                              React.createElement('button', { type: 'button', style: Object.assign({}, btnStyle, { marginTop: 8 }), onClick: addZone }, t('Add zone')),
                                         normalizeArray(selectedItem.zones).map((z, idx) =>
                                             React.createElement(
                                                 'div',
@@ -860,36 +911,45 @@
                                                 React.createElement('button', { type: 'button', style: btnDangerStyle, onClick: () => deleteZone(idx) }, t('Delete'))
                                             )
                                         ),
-                                        React.createElement('div', { style: { marginTop: 14, fontSize: 12, fontWeight: 700 } }, t('Time condition')),
-                                        React.createElement('label', { style: labelStyle }, t('Mode')),
-                                        React.createElement(
-                                            'select',
-                                            { style: selectStyle, value: (selectedItem.time && selectedItem.time.mode) || 'astroWindow', onChange: e => updateSelectedPath('time.mode', e.target.value) },
-                                            React.createElement('option', { value: 'always', style: optionStyle }, t('Always')),
-                                            React.createElement('option', { value: 'astroWindow', style: optionStyle }, t('Astro window (start/end states)'))
-                                        ),
-                                        (selectedItem.time && selectedItem.time.mode) === 'astroWindow'
-                                            ? React.createElement(
-                                                  React.Fragment,
-                                                  null,
-                                                  React.createElement('label', { style: labelStyle }, t('Start time state id (HH:MM:SS)')),
+                                              React.createElement('div', { style: { marginTop: 14, fontSize: 12, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 } },
+                                                  React.createElement('span', null, t('Time condition')),
+                                                  React.createElement('span', { style: tooltipStyle, title: t('Control when device can be triggered. E.g., only at night or during specific hours.') }, '❓')
+                                              ),
+                                              React.createElement('label', { style: labelStyle }, t('Mode')),
+                                              React.createElement(
+                                                  'select',
+                                                  { style: selectStyle, value: (selectedItem.time && selectedItem.time.mode) || 'astroWindow', onChange: e => updateSelectedPath('time.mode', e.target.value) },
+                                                  React.createElement('option', { value: 'always', style: optionStyle }, t('Always')),
+                                                  React.createElement('option', { value: 'astroWindow', style: optionStyle }, t('Astro window (start/end states)'))
+                                              ),
+                                              (selectedItem.time && selectedItem.time.mode) === 'astroWindow'
+                                                  ? React.createElement(
+                                                        React.Fragment,
+                                                        null,
+                                                        React.createElement('label', { style: labelWithTooltipStyle },
+                                                            React.createElement('span', null, t('Start time state id (HH:MM:SS)')),
+                                                            React.createElement('span', { style: tooltipStyle, title: t('State containing start time in HH:MM:SS format (e.g., astro.0.sunrise)') }, '❓')
+                                                        ),
                                                   React.createElement(
                                                       'div',
                                                       { style: { display: 'flex', gap: 8, alignItems: 'center' } },
-                                                      React.createElement('input', { style: Object.assign({}, inputStyle, { flex: 1 }), type: 'text', value: (selectedItem.time && selectedItem.time.startStateId) || '', onChange: e => updateSelectedPath('time.startStateId', e.target.value) }),
-                                                      React.createElement('button', { type: 'button', style: btnStyle, disabled: !(DialogSelectID && socket && theme), onClick: () => setSelectContext({ kind: 'timeStart' }) }, t('Select'))
-                                                  ),
-                                                  React.createElement('label', { style: labelStyle }, t('End time state id (HH:MM:SS)')),
+                                                        React.createElement('input', { style: Object.assign({}, inputStyle, { flex: 1 }), type: 'text', value: (selectedItem.time && selectedItem.time.startStateId) || '', onChange: e => updateSelectedPath('time.startStateId', e.target.value) }),
+                                                        React.createElement('button', { type: 'button', style: btnStyle, disabled: !(DialogSelectID && socket && theme), onClick: () => setSelectContext({ kind: 'timeStart' }) }, t('Select'))
+                                                    ),
+                                                    React.createElement('label', { style: labelWithTooltipStyle },
+                                                        React.createElement('span', null, t('End time state id (HH:MM:SS)')),
+                                                        React.createElement('span', { style: tooltipStyle, title: t('State containing end time in HH:MM:SS format (e.g., astro.0.sunset)') }, '❓')
+                                                    ),
                                                   React.createElement(
                                                       'div',
                                                       { style: { display: 'flex', gap: 8, alignItems: 'center' } },
-                                                      React.createElement('input', { style: Object.assign({}, inputStyle, { flex: 1 }), type: 'text', value: (selectedItem.time && selectedItem.time.endStateId) || '', onChange: e => updateSelectedPath('time.endStateId', e.target.value) }),
-                                                      React.createElement('button', { type: 'button', style: btnStyle, disabled: !(DialogSelectID && socket && theme), onClick: () => setSelectContext({ kind: 'timeEnd' }) }, t('Select'))
-                                                  )
-                                              )
-                                            : null
-                                        )
-                              ),
+                                                        React.createElement('input', { style: Object.assign({}, inputStyle, { flex: 1 }), type: 'text', value: (selectedItem.time && selectedItem.time.endStateId) || '', onChange: e => updateSelectedPath('time.endStateId', e.target.value) }),
+                                                        React.createElement('button', { type: 'button', style: btnStyle, disabled: !(DialogSelectID && socket && theme), onClick: () => setSelectContext({ kind: 'timeEnd' }) }, t('Select'))
+                                                    )
+                                                )
+                                              : null
+                                          )
+                                      : null),
                               renderStatePicker()
                           )
                         : React.createElement('div', { style: { opacity: 0.9, color: colors.textMuted } }, t('Select an item on the left or add a new one.'))
