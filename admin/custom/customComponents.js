@@ -313,15 +313,19 @@
 
             const selectedItem = items[selectedIndex] || null;
 
-            // Reset input field states when selected item changes
+            // Update input field states when selected item changes
             React.useEffect(() => {
                 if (selectedItem) {
-                    // Clear input states so they get refreshed on next focus
-                    setZoneInputText('');
-                    setTypesInputText('');
-                    setLabelsInputText('');
+                    // Load values from selected item into input fields
+                    const currentTypes = selectedItem.filter && selectedItem.filter.types ? selectedItem.filter.types : ['end'];
+                    const currentLabels = selectedItem.filter && Array.isArray(selectedItem.filter.labels) ? selectedItem.filter.labels : ['person'];
+                    const currentZones = selectedItem.filter && Array.isArray(selectedItem.filter.enteredZones) ? selectedItem.filter.enteredZones : [];
+                    
+                    setTypesInputText(currentTypes.join(', '));
+                    setLabelsInputText(currentLabels.join(', '));
+                    setZoneInputText(currentZones.join(', '));
                 }
-            }, [selectedIndex]);
+            }, [selectedIndex, selectedItem]);
 
             React.useEffect(() => {
                 const onDocClick = e => {
@@ -834,12 +838,6 @@
                                       const types = String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean);
                                       updateSelectedPath('filter.types', types.length > 0 ? types : ['end']);
                                   },
-                                  onFocus: () => {
-                                      if (!typesInputText) {
-                                          const current = selectedItem.filter && selectedItem.filter.types ? selectedItem.filter.types : ['end'];
-                                          setTypesInputText(current.join(', '));
-                                      }
-                                  },
                                   onBlur: () => {
                                       const types = String(typesInputText || '').split(',').map(s => s.trim()).filter(Boolean);
                                       const finalTypes = types.length > 0 ? types : ['end'];
@@ -863,12 +861,6 @@
                                               // Update config immediately for save button
                                               const labels = String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean);
                                               updateSelectedPath('filter.labels', labels.length > 0 ? labels : ['person']);
-                                          },
-                                          onFocus: () => {
-                                              if (!labelsInputText) {
-                                                  const current = selectedItem.filter && Array.isArray(selectedItem.filter.labels) ? selectedItem.filter.labels : ['person'];
-                                                  setLabelsInputText(current.join(', '));
-                                              }
                                           },
                                           onBlur: () => {
                                               const labels = String(labelsInputText || '').split(',').map(s => s.trim()).filter(Boolean);
@@ -951,13 +943,6 @@
                                               // Update config immediately for save button
                                               const zones = String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean);
                                               updateSelectedPath('filter.enteredZones', zones);
-                                          },
-                                          onFocus: () => {
-                                              // Initialize with current zones when focused
-                                              if (!zoneInputText) {
-                                                  const currentZones = selectedItem.filter && Array.isArray(selectedItem.filter.enteredZones) ? selectedItem.filter.enteredZones : [];
-                                                  setZoneInputText(currentZones.join(', '));
-                                              }
                                           },
                                           onBlur: () => {
                                               // Save zones when field loses focus
