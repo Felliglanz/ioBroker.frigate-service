@@ -169,6 +169,25 @@
                 return out;
             }
 
+            function migrateItem(item) {
+                // Clean up old/deprecated fields from previous versions
+                if (!item || typeof item !== 'object') return item;
+                
+                const migrated = { ...item };
+                
+                // Remove old singular "label" field (deprecated, use "labels" array instead)
+                if (migrated.filter && 'label' in migrated.filter) {
+                    delete migrated.filter.label;
+                }
+                
+                // Ensure labels is an array
+                if (migrated.filter && migrated.filter.labels && !Array.isArray(migrated.filter.labels)) {
+                    delete migrated.filter.labels;
+                }
+                
+                return migrated;
+            }
+
             const DialogSelectID = AdapterReact && (AdapterReact.DialogSelectID || AdapterReact.SelectID);
             const socket = (props && props.socket) || globalThis.socket || globalThis._socket || null;
             const theme = (props && props.theme) || null;
@@ -271,7 +290,7 @@
                 backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
             });
 
-            const rawItems = normalizeArray((props && props.data && (props.data[attr] || props.data.items)) || (props && props.data && props.data[DEFAULT_ITEMS_ATTR]) || []);
+            const rawItems = normalizeArray((props && props.data && (props.data[attr] || props.data.items)) || (props && props.data && props.data[DEFAULT_ITEMS_ATTR]) || []).map(migrateItem);
 
             const [localItems, setLocalItems] = React.useState(rawItems);
             const [zoneInputText, setZoneInputText] = React.useState('');
