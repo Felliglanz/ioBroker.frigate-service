@@ -861,7 +861,29 @@
                                               )
                                           );
                                       })(),
-                                      React.createElement('input', { style: inputStyle, type: 'text', placeholder: 'Zone_Name1, Zone_Name2', value: (selectedItem.filter && Array.isArray(selectedItem.filter.enteredZones) ? selectedItem.filter.enteredZones.join(',') : ''), onChange: e => updateSelectedPath('filter.enteredZones', String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean)) })
+                                      (() => {
+                                          // Use local state for text input to allow typing commas
+                                          const currentZones = selectedItem.filter && Array.isArray(selectedItem.filter.enteredZones) ? selectedItem.filter.enteredZones : [];
+                                          const [zoneText, setZoneText] = React.useState(currentZones.join(', '));
+                                          
+                                          React.useEffect(() => {
+                                              setZoneText(currentZones.join(', '));
+                                          }, [selectedItem]);
+                                          
+                                          const handleBlur = () => {
+                                              const zones = String(zoneText || '').split(',').map(s => s.trim()).filter(Boolean);
+                                              updateSelectedPath('filter.enteredZones', zones);
+                                          };
+                                          
+                                          return React.createElement('input', {
+                                              style: inputStyle,
+                                              type: 'text',
+                                              placeholder: 'Zone_Name1, Zone_Name2',
+                                              value: zoneText,
+                                              onChange: e => setZoneText(e.target.value),
+                                              onBlur: handleBlur
+                                          });
+                                      })()
                                   )
                               ),
                               React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
