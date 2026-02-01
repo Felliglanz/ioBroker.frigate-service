@@ -111,7 +111,7 @@
                 // Shared filter
                 filter: {
                     types: ['end'],
-                    label: 'person',
+                    labels: ['person'],
                     minScore: 0.8,
                     throttleMs: 30000,
                     dedupeTtlMs: 10 * 60 * 1000
@@ -795,10 +795,10 @@
                               React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
                                   React.createElement('div', null,
                                       React.createElement('label', { style: labelWithTooltipStyle },
-                                          React.createElement('span', null, t('Label')),
-                                          React.createElement('span', { style: tooltipStyle, title: t('Object type to detect (person, car, dog, cat, etc.)') }, '❓')
+                                          React.createElement('span', null, t('Labels')),
+                                          React.createElement('span', { style: tooltipStyle, title: t('Object types to detect, comma-separated (person, car, dog, cat, etc.)') }, '❓')
                                       ),
-                                      React.createElement('input', { style: inputStyle, type: 'text', placeholder: 'person', value: (selectedItem.filter && selectedItem.filter.label) || 'person', onChange: e => updateSelectedPath('filter.label', e.target.value) })
+                                      React.createElement('input', { style: inputStyle, type: 'text', placeholder: 'person', value: (selectedItem.filter && Array.isArray(selectedItem.filter.labels) ? selectedItem.filter.labels.join(',') : 'person'), onChange: e => updateSelectedPath('filter.labels', String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean)) })
                                   ),
                                   React.createElement('div', null,
                                       React.createElement('label', { style: labelWithTooltipStyle },

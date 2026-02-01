@@ -72,10 +72,10 @@ systemDictionary = {
         "en": "Comma-separated. Common: new, update, end. Typical: end",
         "de": "Kommagetrennt. Üblich: new, update, end. Typisch: end"
     },
-    "Label": { "en": "Label", "de": "Label" },
-    "Object type to detect (person, car, dog, cat, etc.)": {
-        "en": "Object type to detect (person, car, dog, cat, etc.)",
-        "de": "Zu erkennender Objekttyp (person, car, dog, cat, etc.)"
+    "Labels": { "en": "Labels", "de": "Labels" },
+    "Object types to detect, comma-separated (person, car, dog, cat, etc.)": {
+        "en": "Object types to detect, comma-separated (person, car, dog, cat, etc.)",
+        "de": "Zu erkennende Objekttypen, kommagetrennt (person, car, dog, cat, etc.)"
     },
     "Min score": { "en": "Min score", "de": "Min. Konfidenz" },
     "Minimum confidence score (0.0-1.0). Higher = fewer false positives.": {

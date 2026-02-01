@@ -4,8 +4,8 @@
     "version": "0.1.0",
     "news": {
       "0.1.0": {
-        "en": "First public release with custom UI, zone management, and i18n support",
-        "de": "Erste öffentliche Version mit benutzerdefinierter UI, Zonenverwaltung und i18n-Unterstützung"
+        "en": "Multi-label support: Notifications now support multiple object types (e.g., person, car) with OR logic",
+        "de": "Multi-Label-Unterstützung: Benachrichtigungen unterstützen jetzt mehrere Objekttypen (z.B. person, car) mit ODER-Logik"
       },
       "0.0.1": {
         "en": "Initial development version",
