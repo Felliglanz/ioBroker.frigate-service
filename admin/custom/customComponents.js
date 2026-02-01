@@ -274,6 +274,7 @@
             const rawItems = normalizeArray((props && props.data && (props.data[attr] || props.data.items)) || (props && props.data && props.data[DEFAULT_ITEMS_ATTR]) || []);
 
             const [localItems, setLocalItems] = React.useState(rawItems);
+            const [zoneInputText, setZoneInputText] = React.useState('');
 
             React.useEffect(() => {
                 // Keep local state in sync with external config updates.
@@ -838,7 +839,9 @@
                                           const addZone = zoneName => {
                                               const current = selectedItem.filter && Array.isArray(selectedItem.filter.enteredZones) ? selectedItem.filter.enteredZones : [];
                                               if (!current.includes(zoneName)) {
-                                                  updateSelectedPath('filter.enteredZones', [...current, zoneName]);
+                                                  const updated = [...current, zoneName];
+                                                  updateSelectedPath('filter.enteredZones', updated);
+                                                  setZoneInputText(updated.join(', '));
                                               }
                                           };
                                           
@@ -861,29 +864,25 @@
                                               )
                                           );
                                       })(),
-                                      (() => {
-                                          // Use local state for text input to allow typing commas
-                                          const currentZones = selectedItem.filter && Array.isArray(selectedItem.filter.enteredZones) ? selectedItem.filter.enteredZones : [];
-                                          const [zoneText, setZoneText] = React.useState(currentZones.join(', '));
-                                          
-                                          React.useEffect(() => {
-                                              setZoneText(currentZones.join(', '));
-                                          }, [selectedItem]);
-                                          
-                                          const handleBlur = () => {
-                                              const zones = String(zoneText || '').split(',').map(s => s.trim()).filter(Boolean);
+                                      React.createElement('input', {
+                                          style: inputStyle,
+                                          type: 'text',
+                                          placeholder: 'Zone_Name1, Zone_Name2',
+                                          value: zoneInputText,
+                                          onChange: e => setZoneInputText(e.target.value),
+                                          onFocus: () => {
+                                              // Initialize with current zones when focused
+                                              if (!zoneInputText) {
+                                                  const currentZones = selectedItem.filter && Array.isArray(selectedItem.filter.enteredZones) ? selectedItem.filter.enteredZones : [];
+                                                  setZoneInputText(currentZones.join(', '));
+                                              }
+                                          },
+                                          onBlur: () => {
+                                              // Save zones when field loses focus
+                                              const zones = String(zoneInputText || '').split(',').map(s => s.trim()).filter(Boolean);
                                               updateSelectedPath('filter.enteredZones', zones);
-                                          };
-                                          
-                                          return React.createElement('input', {
-                                              style: inputStyle,
-                                              type: 'text',
-                                              placeholder: 'Zone_Name1, Zone_Name2',
-                                              value: zoneText,
-                                              onChange: e => setZoneText(e.target.value),
-                                              onBlur: handleBlur
-                                          });
-                                      })()
+                                          }
+                                      })
                                   )
                               ),
                               React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
