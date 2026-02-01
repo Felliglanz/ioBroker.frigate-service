@@ -1079,6 +1079,8 @@
             const toolbarStyle = { display: 'flex', gap: 8, padding: 10, borderBottom: `1px solid ${colors.rowBorder}`, flexWrap: 'wrap' };
             const listStyle = { overflowY: 'auto', overflowX: 'hidden', flex: 1 };
             const labelStyle = { display: 'block', fontSize: 12, color: colors.textMuted, marginTop: 10 };
+            const labelWithTooltipStyle = { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: colors.textMuted, marginTop: 10 };
+            const tooltipStyle = { cursor: 'help', opacity: 0.6, fontSize: 11 };
             const inputStyle = { width: '100%', padding: '8px 10px', borderRadius: 6, border: `1px solid ${colors.border}`, fontFamily: 'inherit', fontSize: 14, color: colors.text, background: colors.inputBg };
             const btnStyle = { padding: '6px 10px', borderRadius: 6, border: `1px solid ${colors.border}`, background: 'transparent', cursor: 'pointer', color: colors.text };
             const btnDangerStyle = Object.assign({}, btnStyle, { border: `1px solid ${isDark ? 'rgba(255,120,120,0.5)' : 'rgba(200,0,0,0.25)'}` });
