@@ -313,7 +313,7 @@
 
             const selectedItem = items[selectedIndex] || null;
 
-            // Update input field states when selected item changes
+            // Update input field states when selected item changes (only on index change, not on every item update)
             React.useEffect(() => {
                 if (selectedItem) {
                     // Load values from selected item into input fields
@@ -325,7 +325,7 @@
                     setLabelsInputText(currentLabels.join(', '));
                     setZoneInputText(currentZones.join(', '));
                 }
-            }, [selectedIndex, selectedItem]);
+            }, [selectedIndex]);
 
             React.useEffect(() => {
                 const onDocClick = e => {
