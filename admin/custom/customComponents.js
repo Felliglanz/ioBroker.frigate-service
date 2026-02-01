@@ -814,8 +814,30 @@
                                       React.createElement('input', { style: inputStyle, type: 'text', value: (selectedItem.filter && selectedItem.filter.subLabel) || '', onChange: e => updateSelectedPath('filter.subLabel', e.target.value) })
                                   ),
                                   React.createElement('div', null,
-                                      React.createElement('label', { style: labelStyle }, t('Entered zones (comma-separated, optional)')),
-                                      React.createElement('input', { style: inputStyle, type: 'text', value: (selectedItem.filter && Array.isArray(selectedItem.filter.enteredZones) ? selectedItem.filter.enteredZones.join(',') : ''), onChange: e => updateSelectedPath('filter.enteredZones', String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean)) })
+                                      React.createElement('label', { style: labelWithTooltipStyle },
+                                          React.createElement('span', null, t('Entered zones')),
+                                          React.createElement('span', { style: tooltipStyle, title: t('Zone names, comma-separated (e.g. Zone_Einfahrt, Zone_Garten). Leave empty to match all zones.') }, '❓')
+                                      ),
+                                      React.createElement('input', { style: inputStyle, type: 'text', placeholder: 'Zone_Name1, Zone_Name2', value: (selectedItem.filter && Array.isArray(selectedItem.filter.enteredZones) ? selectedItem.filter.enteredZones.join(',') : ''), onChange: e => updateSelectedPath('filter.enteredZones', String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean)) }),
+                                      (() => {
+                                          // Collect unique zone names from camera zones config
+                                          const allCameraZones = new Set();
+                                          normalizeArray(data.cameras).forEach(cam => {
+                                              normalizeArray(cam.zones).forEach(zone => {
+                                                  const zoneStr = String(zone || '').trim();
+                                                  // Extract zone name from state ID like "frigate.0.Zone_Name.person"
+                                                  const match = zoneStr.match(/\.([^.]+)\.[^.]+$/);
+                                                  if (match && match[1]) {
+                                                      allCameraZones.add(match[1]);
+                                                  }
+                                              });
+                                          });
+                                          const zoneNames = Array.from(allCameraZones).sort();
+                                          if (zoneNames.length === 0) return null;
+                                          return React.createElement('div', { style: { fontSize: 11, color: '#666', marginTop: 4, fontStyle: 'italic' } },
+                                              t('Available zones from cameras') + ': ' + zoneNames.join(', ')
+                                          );
+                                      })()
                                   )
                               ),
                               React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
@@ -1366,7 +1388,12 @@
                                   React.createElement('input', { style: inputStyle, type: 'text', value: selectedCamera.id || '', onChange: e => updateCamera('id', e.target.value), placeholder: 'e.g. einfahrt' }),
                                   React.createElement('label', { style: labelStyle }, t('Display name (optional)')),
                                   React.createElement('input', { style: inputStyle, type: 'text', value: selectedCamera.name || '', onChange: e => updateCamera('name', e.target.value), placeholder: 'e.g. Einfahrt' }),
-                                  React.createElement('div', { style: { marginTop: 16, fontSize: 12, fontWeight: 700, marginBottom: 8 } }, t('Zones')),
+                                  React.createElement('div', { style: { marginTop: 16 } },
+                                      React.createElement('label', { style: labelWithTooltipStyle },
+                                          React.createElement('span', null, t('Zones')),
+                                          React.createElement('span', { style: tooltipStyle, title: t('Zone state IDs for device control (e.g. frigate.0.Zone_Name.person). Not needed for notifications.') }, '❓')
+                                      )
+                                  ),
                                   React.createElement('button', { type: 'button', style: btnStyle, onClick: addZoneToCamera }, t('Add zone')),
                                   normalizeArray(selectedCamera.zones).map((z, zIdx) =>
                                       React.createElement(
