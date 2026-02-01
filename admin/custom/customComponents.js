@@ -311,6 +311,18 @@
             const [selectContext, setSelectContext] = React.useState(null);
             const [openDropdownId, setOpenDropdownId] = React.useState(null);
 
+            const selectedItem = items[selectedIndex] || null;
+
+            // Reset input field states when selected item changes
+            React.useEffect(() => {
+                if (selectedItem) {
+                    // Clear input states so they get refreshed on next focus
+                    setZoneInputText('');
+                    setTypesInputText('');
+                    setLabelsInputText('');
+                }
+            }, [selectedIndex]);
+
             React.useEffect(() => {
                 const onDocClick = e => {
                     try {
@@ -414,8 +426,6 @@
                 const safeItems = normalizeArray(nextItems).map(it => ensureTitle(it, t));
                 applyItemsChange(safeItems);
             };
-
-            const selectedItem = items[selectedIndex] || null;
 
             const updateSelected = (field, value) => {
                 const nextItems = items.map((it, i) => {
