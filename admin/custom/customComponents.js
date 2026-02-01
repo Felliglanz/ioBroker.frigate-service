@@ -837,7 +837,9 @@
                                   },
                                   onBlur: () => {
                                       const types = String(typesInputText || '').split(',').map(s => s.trim()).filter(Boolean);
-                                      updateSelectedPath('filter.types', types.length > 0 ? types : ['end']);
+                                      const finalTypes = types.length > 0 ? types : ['end'];
+                                      updateSelectedPath('filter.types', finalTypes);
+                                      setTypesInputText(finalTypes.join(', '));
                                   }
                               }),
                               React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
@@ -860,7 +862,9 @@
                                           },
                                           onBlur: () => {
                                               const labels = String(labelsInputText || '').split(',').map(s => s.trim()).filter(Boolean);
-                                              updateSelectedPath('filter.labels', labels.length > 0 ? labels : ['person']);
+                                              const finalLabels = labels.length > 0 ? labels : ['person'];
+                                              updateSelectedPath('filter.labels', finalLabels);
+                                              setLabelsInputText(finalLabels.join(', '));
                                           }
                                       })
                                   ),
@@ -944,6 +948,7 @@
                                               // Save zones when field loses focus
                                               const zones = String(zoneInputText || '').split(',').map(s => s.trim()).filter(Boolean);
                                               updateSelectedPath('filter.enteredZones', zones);
+                                              setZoneInputText(zones.join(', '));
                                           }
                                       })
                                   )
