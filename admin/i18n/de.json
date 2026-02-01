@@ -50,6 +50,7 @@
   "Entered zones": "Zonen-Filter (optional)",
   "Zone names, comma-separated (e.g. Zone_Einfahrt, Zone_Garten). Leave empty to match all zones.": "Zonen-Namen, kommagetrennt (z.B. Zone_Einfahrt, Zone_Garten). Leer lassen = alle Zonen.",
   "Available zones from cameras": "Verfügbare Zonen aus Kamera-Config",
+  "Click buttons above to quickly add zones": "Klicke auf die Buttons oben, um Zonen schnell hinzuzufügen",
   "Throttle (ms)": "Drosselung (ms)",
   "Dedupe TTL (ms)": "Deduplizierung TTL (ms)",
   "Notify settings": "Benachrichtigungseinstellungen",

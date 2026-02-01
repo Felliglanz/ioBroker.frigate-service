@@ -818,7 +818,6 @@
                                           React.createElement('span', null, t('Entered zones')),
                                           React.createElement('span', { style: tooltipStyle, title: t('Zone names, comma-separated (e.g. Zone_Einfahrt, Zone_Garten). Leave empty to match all zones.') }, '❓')
                                       ),
-                                      React.createElement('input', { style: inputStyle, type: 'text', placeholder: 'Zone_Name1, Zone_Name2', value: (selectedItem.filter && Array.isArray(selectedItem.filter.enteredZones) ? selectedItem.filter.enteredZones.join(',') : ''), onChange: e => updateSelectedPath('filter.enteredZones', String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean)) }),
                                       (() => {
                                           // Collect unique zone names from camera zones config
                                           const allCameraZones = new Set();
@@ -834,11 +833,35 @@
                                               });
                                           });
                                           const zoneNames = Array.from(allCameraZones).sort();
+                                          
+                                          // Quick-add buttons for zones
+                                          const addZone = zoneName => {
+                                              const current = selectedItem.filter && Array.isArray(selectedItem.filter.enteredZones) ? selectedItem.filter.enteredZones : [];
+                                              if (!current.includes(zoneName)) {
+                                                  updateSelectedPath('filter.enteredZones', [...current, zoneName]);
+                                              }
+                                          };
+                                          
                                           if (zoneNames.length === 0) return null;
-                                          return React.createElement('div', { style: { fontSize: 11, color: '#666', marginTop: 4, fontStyle: 'italic' } },
-                                              t('Available zones from cameras') + ': ' + zoneNames.join(', ')
+                                          
+                                          return React.createElement('div', { style: { marginTop: 6, marginBottom: 6 } },
+                                              React.createElement('div', { style: { display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 } },
+                                                  zoneNames.map(zone => 
+                                                      React.createElement('button', {
+                                                          key: zone,
+                                                          type: 'button',
+                                                          style: Object.assign({}, btnStyle, { padding: '4px 8px', fontSize: 11 }),
+                                                          onClick: () => addZone(zone),
+                                                          title: t('Add zone') + ': ' + zone
+                                                      }, '+ ' + zone)
+                                                  )
+                                              ),
+                                              React.createElement('div', { style: { fontSize: 10, color: colors.textMuted, fontStyle: 'italic' } },
+                                                  t('Click buttons above to quickly add zones')
+                                              )
                                           );
-                                      })()
+                                      })(),
+                                      React.createElement('input', { style: inputStyle, type: 'text', placeholder: 'Zone_Name1, Zone_Name2', value: (selectedItem.filter && Array.isArray(selectedItem.filter.enteredZones) ? selectedItem.filter.enteredZones.join(',') : ''), onChange: e => updateSelectedPath('filter.enteredZones', String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean)) })
                                   )
                               ),
                               React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },

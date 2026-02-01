@@ -50,6 +50,7 @@
   "Entered zones": "Zone filter (optional)",
   "Zone names, comma-separated (e.g. Zone_Einfahrt, Zone_Garten). Leave empty to match all zones.": "Zone names, comma-separated (e.g. Zone_Driveway, Zone_Garden). Leave empty to match all zones.",
   "Available zones from cameras": "Available zones from cameras",
+  "Click buttons above to quickly add zones": "Click buttons above to quickly add zones",
   "Throttle (ms)": "Throttle (ms)",
   "Dedupe TTL (ms)": "Dedupe TTL (ms)",
   "Notify settings": "Notify settings",
