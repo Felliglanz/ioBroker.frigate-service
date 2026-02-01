@@ -12,6 +12,8 @@
   "Frigate username": "Frigate-Benutzername",
   "Frigate password": "Frigate-Passwort",
   "Frigate bearer token": "Frigate Bearer-Token",
+  "Notification language": "Benachrichtigungssprache",
+  "Language for notification messages (labels like person, car, etc.).": "Sprache für Benachrichtigungstexte (Labels wie Person, Auto, etc.).",
   "Cameras & Targets": "Kameras & Ziele",
   "Add": "Hinzufügen",
   "Delete": "Löschen",

@@ -48,6 +48,19 @@
 
         "_divider1": { "type": "divider", "label": "" },
 
+        "notificationLanguage": {
+          "type": "select",
+          "label": "Notification language",
+          "help": "Language for notification messages (labels like person, car, etc.).",
+          "options": [
+            { "label": "Deutsch", "value": "de" },
+            { "label": "English", "value": "en" }
+          ],
+          "default": "de"
+        },
+
+        "_divider2": { "type": "divider", "label": "" },
+
         "_globalEditor": {
           "type": "custom",
           "label": "Cameras & Targets",
