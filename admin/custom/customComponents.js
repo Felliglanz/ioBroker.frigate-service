@@ -828,7 +828,12 @@
                                   type: 'text',
                                   placeholder: 'end',
                                   value: typesInputText,
-                                  onChange: e => setTypesInputText(e.target.value),
+                                  onChange: e => {
+                                      setTypesInputText(e.target.value);
+                                      // Update config immediately for save button, parse on blur for validation
+                                      const types = String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean);
+                                      updateSelectedPath('filter.types', types.length > 0 ? types : ['end']);
+                                  },
                                   onFocus: () => {
                                       if (!typesInputText) {
                                           const current = selectedItem.filter && selectedItem.filter.types ? selectedItem.filter.types : ['end'];
@@ -853,7 +858,12 @@
                                           type: 'text',
                                           placeholder: 'person',
                                           value: labelsInputText,
-                                          onChange: e => setLabelsInputText(e.target.value),
+                                          onChange: e => {
+                                              setLabelsInputText(e.target.value);
+                                              // Update config immediately for save button
+                                              const labels = String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean);
+                                              updateSelectedPath('filter.labels', labels.length > 0 ? labels : ['person']);
+                                          },
                                           onFocus: () => {
                                               if (!labelsInputText) {
                                                   const current = selectedItem.filter && Array.isArray(selectedItem.filter.labels) ? selectedItem.filter.labels : ['person'];
@@ -936,7 +946,12 @@
                                           type: 'text',
                                           placeholder: 'Zone_Name1, Zone_Name2',
                                           value: zoneInputText,
-                                          onChange: e => setZoneInputText(e.target.value),
+                                          onChange: e => {
+                                              setZoneInputText(e.target.value);
+                                              // Update config immediately for save button
+                                              const zones = String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean);
+                                              updateSelectedPath('filter.enteredZones', zones);
+                                          },
                                           onFocus: () => {
                                               // Initialize with current zones when focused
                                               if (!zoneInputText) {
