@@ -822,7 +822,8 @@
                                       (() => {
                                           // Collect unique zone names from camera zones config
                                           const allCameraZones = new Set();
-                                          normalizeArray(data.cameras).forEach(cam => {
+                                          const configCameras = (props && props.data && props.data.cameras) || [];
+                                          normalizeArray(configCameras).forEach(cam => {
                                               normalizeArray(cam.zones).forEach(zone => {
                                                   const zoneStr = String(zone || '').trim();
                                                   // Extract zone name from state ID like "frigate.0.Zone_Name.person"
