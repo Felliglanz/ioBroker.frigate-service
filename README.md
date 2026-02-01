@@ -41,13 +41,14 @@ Der **Frigate-Service-Adapter** verbindet deinen [Frigate](https://frigate.video
 ## ✨ Features
 
 - ✅ **Custom Admin UI** mit Master/Detail-Editor für intuitive Konfiguration
-- ✅ **Zone-Management** per State-Picker direkt aus Frigate-Adapter
-- ✅ **Mehrsprachig** (Deutsch/Englisch)
+- ✅ **Zone-Management** per State-Picker direkt aus Frigate-Adapter mit Quick-Add Buttons
+- ✅ **Mehrsprachig** (Deutsch/Englisch) - sowohl UI als auch Benachrichtigungen
 - ✅ **Flexible Filter**: Nach Objekttyp (person/car/dog), Score, Sub-Label, Event-Typ
 - ✅ **Throttling & Deduplication** um Spam zu vermeiden
 - ✅ **Medien-Versand**: Clips mit konfigurierbarem Padding, Retry-Logik, Fallback auf Snapshot
 - ✅ **Discord & Telegram** Unterstützung
 - ✅ **Device Control**: Automatische Gerätesteuerung ohne Skripte
+- ✅ **Intelligente Config-Migration**: Automatische Bereinigung veralteter Einstellungen
 
 ---
 
@@ -89,6 +90,8 @@ npm install iobroker.frigate-service
   - Nur nötig für Medien-Downloads (Clips/Snapshots)
   - Leer lassen, wenn nur States verwendet werden
 - **Authentifizierung**: None/Basic/Bearer je nach Frigate-Konfiguration
+- **Notification Language**: Sprache für Benachrichtigungen (Deutsch/English)
+  - Übersetzt Objekt-Labels in Nachrichten (z.B. person→Person/Person, car→Auto/Car)
 
 ### 2. Kameras & Ziele
 
@@ -131,9 +134,10 @@ Sendet Nachricht mit Medien an Discord/Telegram wenn Ereignis eintritt.
   - Pro Kamera: Target überschreiben möglich
 - **Filter**:
   - **Event types**: `end` (typisch), `new`, `update`
-  - **Label**: `person`, `car`, `dog`, etc.
+  - **Labels**: Komma-separiert (z.B. `person, car, dog`) - triggert bei **EINEM** der Labels
   - **Min score**: Konfidenz-Schwelle (0.0-1.0)
-  - **Entered zones**: Nur triggern wenn bestimmte Zonen betreten
+  - **Entered zones**: Komma-separiert (z.B. `Zone_Einfahrt, Zone_Garten`) - nur triggern wenn bestimmte Zonen betreten
+    - 💡 **Quick-Add Buttons**: Zeigt verfügbare Zonen aus Kamera-Konfiguration zum schnellen Hinzufügen
 - **Notify**:
   - **Default target**: Wohin senden
   - **Media mode**: Clip oder Snapshot
@@ -141,6 +145,20 @@ Sendet Nachricht mit Medien an Discord/Telegram wenn Ereignis eintritt.
   - **Max upload**: Discord max 8-25 MB je nach Boost
 
 **Beispiel**: "Person in Zone Einfahrt erkannt → Discord-Nachricht mit 5s-Clip"
+
+```
+Name: Haustür Bewegung
+Kind: Notify
+Cameras: einfahrt
+Filter:
+  - Event types: end
+  - Labels: person, car    ← Triggert bei Person ODER Auto
+  - Entered zones: Haustuer
+  - Min score: 0.8
+Notify:
+  - Target: discord_haus
+  - Media: Clip (3s padding)
+```
 
 ##### 💡 Gerät (Device)
 
@@ -257,6 +275,21 @@ Filter:
 ---
 
 ## 📝 Changelog
+
+### 0.1.1 (2026-02-01)
+🎨 **UX-Verbesserungen**
+- **Multi-Language Support**: Benachrichtigungen unterstützen jetzt Deutsch/Englisch (konfigurierbar in Global-Einstellungen)
+  - Übersetzungen für person→Person/Person, car→Auto/Car, dog→Hund/Dog, etc.
+- **Verbesserte Zone-Konfiguration**:
+  - Klarere Unterscheidung zwischen Device-Zonen und Notify-Zonen-Filter
+  - Tooltips für alle wichtigen Felder
+  - Zone-Discovery: Zeigt verfügbare Zonen aus Kamera-Konfiguration
+  - Quick-Add Buttons für schnelles Hinzufügen von Zonen
+- **Input-Feld-Optimierungen**:
+  - Komma-separierte Eingaben (types, labels, zones) funktionieren jetzt korrekt
+  - Gespeicherte Werte werden sofort korrekt angezeigt
+  - Save-Button aktiviert sich unmittelbar bei Änderungen
+- **Config-Migration**: Automatisches Entfernen veralteter `label` (singular) Felder
 
 ### 0.1.0 (2026-01-31)
 ✨ **Erste öffentliche Release**

@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "frigate-service",
-    "version": "0.1.0",
+    "version": "0.1.1",
     "news": {
+      "0.1.1": {
+        "en": "UX improvements: Multi-language notifications (DE/EN), enhanced zone configuration UI with tooltips and quick-add buttons, improved input field handling",
+        "de": "UX-Verbesserungen: Mehrsprachige Benachrichtigungen (DE/EN), verbesserte Zonen-Konfigurations-UI mit Tooltips und Quick-Add-Buttons, verbesserte Eingabefeld-Handhabung"
+      },
       "0.1.0": {
         "en": "Multi-label support: Notifications now support multiple object types (e.g., person, car) with OR logic",
         "de": "Multi-Label-Unterstützung: Benachrichtigungen unterstützen jetzt mehrere Objekttypen (z.B. person, car) mit ODER-Logik"

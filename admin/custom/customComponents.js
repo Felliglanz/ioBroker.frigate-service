@@ -169,6 +169,25 @@
                 return out;
             }
 
+            function migrateItem(item) {
+                // Clean up old/deprecated fields from previous versions
+                if (!item || typeof item !== 'object') return item;
+                
+                const migrated = { ...item };
+                
+                // Remove old singular "label" field (deprecated, use "labels" array instead)
+                if (migrated.filter && 'label' in migrated.filter) {
+                    delete migrated.filter.label;
+                }
+                
+                // Ensure labels is an array
+                if (migrated.filter && migrated.filter.labels && !Array.isArray(migrated.filter.labels)) {
+                    delete migrated.filter.labels;
+                }
+                
+                return migrated;
+            }
+
             const DialogSelectID = AdapterReact && (AdapterReact.DialogSelectID || AdapterReact.SelectID);
             const socket = (props && props.socket) || globalThis.socket || globalThis._socket || null;
             const theme = (props && props.theme) || null;
@@ -271,9 +290,12 @@
                 backgroundColor: isDark ? '#2a2a2a' : '#ffffff',
             });
 
-            const rawItems = normalizeArray((props && props.data && (props.data[attr] || props.data.items)) || (props && props.data && props.data[DEFAULT_ITEMS_ATTR]) || []);
+            const rawItems = normalizeArray((props && props.data && (props.data[attr] || props.data.items)) || (props && props.data && props.data[DEFAULT_ITEMS_ATTR]) || []).map(migrateItem);
 
             const [localItems, setLocalItems] = React.useState(rawItems);
+            const [zoneInputText, setZoneInputText] = React.useState('');
+            const [typesInputText, setTypesInputText] = React.useState('');
+            const [labelsInputText, setLabelsInputText] = React.useState('');
 
             React.useEffect(() => {
                 // Keep local state in sync with external config updates.
@@ -288,6 +310,22 @@
             const [selectedIndex, setSelectedIndex] = React.useState(0);
             const [selectContext, setSelectContext] = React.useState(null);
             const [openDropdownId, setOpenDropdownId] = React.useState(null);
+
+            const selectedItem = items[selectedIndex] || null;
+
+            // Update input field states when selected item changes (only on index change, not on every item update)
+            React.useEffect(() => {
+                if (selectedItem) {
+                    // Load values from selected item into input fields
+                    const currentTypes = selectedItem.filter && selectedItem.filter.types ? selectedItem.filter.types : ['end'];
+                    const currentLabels = selectedItem.filter && Array.isArray(selectedItem.filter.labels) ? selectedItem.filter.labels : ['person'];
+                    const currentZones = selectedItem.filter && Array.isArray(selectedItem.filter.enteredZones) ? selectedItem.filter.enteredZones : [];
+                    
+                    setTypesInputText(currentTypes.join(', '));
+                    setLabelsInputText(currentLabels.join(', '));
+                    setZoneInputText(currentZones.join(', '));
+                }
+            }, [selectedIndex]);
 
             React.useEffect(() => {
                 const onDocClick = e => {
@@ -392,8 +430,6 @@
                 const safeItems = normalizeArray(nextItems).map(it => ensureTitle(it, t));
                 applyItemsChange(safeItems);
             };
-
-            const selectedItem = items[selectedIndex] || null;
 
             const updateSelected = (field, value) => {
                 const nextItems = items.map((it, i) => {
@@ -791,14 +827,48 @@
                                   React.createElement('span', null, t('Event types')),
                                   React.createElement('span', { style: tooltipStyle, title: t('Comma-separated. Common: new, update, end. Typical: end') }, '❓')
                               ),
-                              React.createElement('input', { style: inputStyle, type: 'text', placeholder: 'end', value: (selectedItem.filter && selectedItem.filter.types ? selectedItem.filter.types.join(',') : 'end'), onChange: e => updateSelectedPath('filter.types', String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean)) }),
+                              React.createElement('input', {
+                                  style: inputStyle,
+                                  type: 'text',
+                                  placeholder: 'end',
+                                  value: typesInputText,
+                                  onChange: e => {
+                                      setTypesInputText(e.target.value);
+                                      // Update config immediately for save button, parse on blur for validation
+                                      const types = String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean);
+                                      updateSelectedPath('filter.types', types.length > 0 ? types : ['end']);
+                                  },
+                                  onBlur: () => {
+                                      const types = String(typesInputText || '').split(',').map(s => s.trim()).filter(Boolean);
+                                      const finalTypes = types.length > 0 ? types : ['end'];
+                                      updateSelectedPath('filter.types', finalTypes);
+                                      setTypesInputText(finalTypes.join(', '));
+                                  }
+                              }),
                               React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
                                   React.createElement('div', null,
                                       React.createElement('label', { style: labelWithTooltipStyle },
                                           React.createElement('span', null, t('Labels')),
                                           React.createElement('span', { style: tooltipStyle, title: t('Object types to detect, comma-separated (person, car, dog, cat, etc.)') }, '❓')
                                       ),
-                                      React.createElement('input', { style: inputStyle, type: 'text', placeholder: 'person', value: (selectedItem.filter && Array.isArray(selectedItem.filter.labels) ? selectedItem.filter.labels.join(',') : 'person'), onChange: e => updateSelectedPath('filter.labels', String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean)) })
+                                      React.createElement('input', {
+                                          style: inputStyle,
+                                          type: 'text',
+                                          placeholder: 'person',
+                                          value: labelsInputText,
+                                          onChange: e => {
+                                              setLabelsInputText(e.target.value);
+                                              // Update config immediately for save button
+                                              const labels = String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean);
+                                              updateSelectedPath('filter.labels', labels.length > 0 ? labels : ['person']);
+                                          },
+                                          onBlur: () => {
+                                              const labels = String(labelsInputText || '').split(',').map(s => s.trim()).filter(Boolean);
+                                              const finalLabels = labels.length > 0 ? labels : ['person'];
+                                              updateSelectedPath('filter.labels', finalLabels);
+                                              setLabelsInputText(finalLabels.join(', '));
+                                          }
+                                      })
                                   ),
                                   React.createElement('div', null,
                                       React.createElement('label', { style: labelWithTooltipStyle },
@@ -814,8 +884,73 @@
                                       React.createElement('input', { style: inputStyle, type: 'text', value: (selectedItem.filter && selectedItem.filter.subLabel) || '', onChange: e => updateSelectedPath('filter.subLabel', e.target.value) })
                                   ),
                                   React.createElement('div', null,
-                                      React.createElement('label', { style: labelStyle }, t('Entered zones (comma-separated, optional)')),
-                                      React.createElement('input', { style: inputStyle, type: 'text', value: (selectedItem.filter && Array.isArray(selectedItem.filter.enteredZones) ? selectedItem.filter.enteredZones.join(',') : ''), onChange: e => updateSelectedPath('filter.enteredZones', String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean)) })
+                                      React.createElement('label', { style: labelWithTooltipStyle },
+                                          React.createElement('span', null, t('Entered zones')),
+                                          React.createElement('span', { style: tooltipStyle, title: t('Zone names, comma-separated (e.g. Zone_Einfahrt, Zone_Garten). Leave empty to match all zones.') }, '❓')
+                                      ),
+                                      (() => {
+                                          // Collect unique zone names from camera zones config
+                                          const allCameraZones = new Set();
+                                          const configCameras = (props && props.data && props.data.cameras) || [];
+                                          normalizeArray(configCameras).forEach(cam => {
+                                              normalizeArray(cam.zones).forEach(zone => {
+                                                  const zoneStr = String(zone || '').trim();
+                                                  // Extract zone name from state ID like "frigate.0.Zone_Name.person"
+                                                  const match = zoneStr.match(/\.([^.]+)\.[^.]+$/);
+                                                  if (match && match[1]) {
+                                                      allCameraZones.add(match[1]);
+                                                  }
+                                              });
+                                          });
+                                          const zoneNames = Array.from(allCameraZones).sort();
+                                          
+                                          // Quick-add buttons for zones
+                                          const addZone = zoneName => {
+                                              const current = selectedItem.filter && Array.isArray(selectedItem.filter.enteredZones) ? selectedItem.filter.enteredZones : [];
+                                              if (!current.includes(zoneName)) {
+                                                  const updated = [...current, zoneName];
+                                                  updateSelectedPath('filter.enteredZones', updated);
+                                                  setZoneInputText(updated.join(', '));
+                                              }
+                                          };
+                                          
+                                          if (zoneNames.length === 0) return null;
+                                          
+                                          return React.createElement('div', { style: { marginTop: 6, marginBottom: 6 } },
+                                              React.createElement('div', { style: { display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 } },
+                                                  zoneNames.map(zone => 
+                                                      React.createElement('button', {
+                                                          key: zone,
+                                                          type: 'button',
+                                                          style: Object.assign({}, btnStyle, { padding: '4px 8px', fontSize: 11 }),
+                                                          onClick: () => addZone(zone),
+                                                          title: t('Add zone') + ': ' + zone
+                                                      }, '+ ' + zone)
+                                                  )
+                                              ),
+                                              React.createElement('div', { style: { fontSize: 10, color: colors.textMuted, fontStyle: 'italic' } },
+                                                  t('Click buttons above to quickly add zones')
+                                              )
+                                          );
+                                      })(),
+                                      React.createElement('input', {
+                                          style: inputStyle,
+                                          type: 'text',
+                                          placeholder: 'Zone_Name1, Zone_Name2',
+                                          value: zoneInputText,
+                                          onChange: e => {
+                                              setZoneInputText(e.target.value);
+                                              // Update config immediately for save button
+                                              const zones = String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean);
+                                              updateSelectedPath('filter.enteredZones', zones);
+                                          },
+                                          onBlur: () => {
+                                              // Save zones when field loses focus
+                                              const zones = String(zoneInputText || '').split(',').map(s => s.trim()).filter(Boolean);
+                                              updateSelectedPath('filter.enteredZones', zones);
+                                              setZoneInputText(zones.join(', '));
+                                          }
+                                      })
                                   )
                               ),
                               React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
@@ -1057,6 +1192,8 @@
             const toolbarStyle = { display: 'flex', gap: 8, padding: 10, borderBottom: `1px solid ${colors.rowBorder}`, flexWrap: 'wrap' };
             const listStyle = { overflowY: 'auto', overflowX: 'hidden', flex: 1 };
             const labelStyle = { display: 'block', fontSize: 12, color: colors.textMuted, marginTop: 10 };
+            const labelWithTooltipStyle = { display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: colors.textMuted, marginTop: 10 };
+            const tooltipStyle = { cursor: 'help', opacity: 0.6, fontSize: 11 };
             const inputStyle = { width: '100%', padding: '8px 10px', borderRadius: 6, border: `1px solid ${colors.border}`, fontFamily: 'inherit', fontSize: 14, color: colors.text, background: colors.inputBg };
             const btnStyle = { padding: '6px 10px', borderRadius: 6, border: `1px solid ${colors.border}`, background: 'transparent', cursor: 'pointer', color: colors.text };
             const btnDangerStyle = Object.assign({}, btnStyle, { border: `1px solid ${isDark ? 'rgba(255,120,120,0.5)' : 'rgba(200,0,0,0.25)'}` });
@@ -1366,7 +1503,12 @@
                                   React.createElement('input', { style: inputStyle, type: 'text', value: selectedCamera.id || '', onChange: e => updateCamera('id', e.target.value), placeholder: 'e.g. einfahrt' }),
                                   React.createElement('label', { style: labelStyle }, t('Display name (optional)')),
                                   React.createElement('input', { style: inputStyle, type: 'text', value: selectedCamera.name || '', onChange: e => updateCamera('name', e.target.value), placeholder: 'e.g. Einfahrt' }),
-                                  React.createElement('div', { style: { marginTop: 16, fontSize: 12, fontWeight: 700, marginBottom: 8 } }, t('Zones')),
+                                  React.createElement('div', { style: { marginTop: 16 } },
+                                      React.createElement('label', { style: labelWithTooltipStyle },
+                                          React.createElement('span', null, t('Zones')),
+                                          React.createElement('span', { style: tooltipStyle, title: t('Zone state IDs for device control (e.g. frigate.0.Zone_Name.person). Not needed for notifications.') }, '❓')
+                                      )
+                                  ),
                                   React.createElement('button', { type: 'button', style: btnStyle, onClick: addZoneToCamera }, t('Add zone')),
                                   normalizeArray(selectedCamera.zones).map((z, zIdx) =>
                                       React.createElement(
