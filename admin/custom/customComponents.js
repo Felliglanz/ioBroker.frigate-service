@@ -275,6 +275,8 @@
 
             const [localItems, setLocalItems] = React.useState(rawItems);
             const [zoneInputText, setZoneInputText] = React.useState('');
+            const [typesInputText, setTypesInputText] = React.useState('');
+            const [labelsInputText, setLabelsInputText] = React.useState('');
 
             React.useEffect(() => {
                 // Keep local state in sync with external config updates.
@@ -792,14 +794,46 @@
                                   React.createElement('span', null, t('Event types')),
                                   React.createElement('span', { style: tooltipStyle, title: t('Comma-separated. Common: new, update, end. Typical: end') }, '❓')
                               ),
-                              React.createElement('input', { style: inputStyle, type: 'text', placeholder: 'end', value: (selectedItem.filter && selectedItem.filter.types ? selectedItem.filter.types.join(',') : 'end'), onChange: e => updateSelectedPath('filter.types', String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean)) }),
+                              React.createElement('input', {
+                                  style: inputStyle,
+                                  type: 'text',
+                                  placeholder: 'end',
+                                  value: typesInputText,
+                                  onChange: e => setTypesInputText(e.target.value),
+                                  onFocus: () => {
+                                      if (!typesInputText) {
+                                          const current = selectedItem.filter && selectedItem.filter.types ? selectedItem.filter.types : ['end'];
+                                          setTypesInputText(current.join(', '));
+                                      }
+                                  },
+                                  onBlur: () => {
+                                      const types = String(typesInputText || '').split(',').map(s => s.trim()).filter(Boolean);
+                                      updateSelectedPath('filter.types', types.length > 0 ? types : ['end']);
+                                  }
+                              }),
                               React.createElement('div', { style: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 } },
                                   React.createElement('div', null,
                                       React.createElement('label', { style: labelWithTooltipStyle },
                                           React.createElement('span', null, t('Labels')),
                                           React.createElement('span', { style: tooltipStyle, title: t('Object types to detect, comma-separated (person, car, dog, cat, etc.)') }, '❓')
                                       ),
-                                      React.createElement('input', { style: inputStyle, type: 'text', placeholder: 'person', value: (selectedItem.filter && Array.isArray(selectedItem.filter.labels) ? selectedItem.filter.labels.join(',') : 'person'), onChange: e => updateSelectedPath('filter.labels', String(e.target.value || '').split(',').map(s => s.trim()).filter(Boolean)) })
+                                      React.createElement('input', {
+                                          style: inputStyle,
+                                          type: 'text',
+                                          placeholder: 'person',
+                                          value: labelsInputText,
+                                          onChange: e => setLabelsInputText(e.target.value),
+                                          onFocus: () => {
+                                              if (!labelsInputText) {
+                                                  const current = selectedItem.filter && Array.isArray(selectedItem.filter.labels) ? selectedItem.filter.labels : ['person'];
+                                                  setLabelsInputText(current.join(', '));
+                                              }
+                                          },
+                                          onBlur: () => {
+                                              const labels = String(labelsInputText || '').split(',').map(s => s.trim()).filter(Boolean);
+                                              updateSelectedPath('filter.labels', labels.length > 0 ? labels : ['person']);
+                                          }
+                                      })
                                   ),
                                   React.createElement('div', null,
                                       React.createElement('label', { style: labelWithTooltipStyle },
