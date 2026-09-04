@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "frigate-service",
-    "version": "0.1.1",
+    "version": "0.1.2",
     "news": {
+      "0.1.2": {
+        "en": "Updated dependencies to require ioBroker Admin 8+",
+        "de": "Abhängigkeiten aktualisiert: erfordert jetzt ioBroker Admin 8+"
+      },
       "0.1.1": {
         "en": "UX improvements: Multi-language notifications (DE/EN), enhanced zone configuration UI with tooltips and quick-add buttons, improved input field handling",
         "de": "UX-Verbesserungen: Mehrsprachige Benachrichtigungen (DE/EN), verbesserte Zonen-Konfigurations-UI mit Tooltips und Quick-Add-Buttons, verbesserte Eingabefeld-Handhabung"
@@ -47,7 +51,11 @@
     "readme": "README.md",
     "restartAdapters": [],
     "dependencies": [],
-    "globalDependencies": []
+    "globalDependencies": [
+      {
+        "admin": ">=8.0.0"
+      }
+    ]
   },
   "native": {
     "frigateInstance": "frigate.0",
