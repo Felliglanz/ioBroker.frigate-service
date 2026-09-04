@@ -1,6 +1,6 @@
 {
   "name": "iobroker.frigate-service",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Event-based automations for ioBroker + Frigate (notifications and device control)",
   "author": "",
   "license": "MIT",
