@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "frigate-service",
-    "version": "0.1.2",
+    "version": "0.1.3",
     "news": {
+      "0.1.3": {
+        "en": "Fix: Revert Admin 8+ requirement, adapter failed to start on Admin 7.x",
+        "de": "Fix: Admin-8+-Anforderung zurückgenommen, Adapter startete auf Admin 7.x nicht mehr"
+      },
       "0.1.2": {
         "en": "Updated dependencies to require ioBroker Admin 8+",
         "de": "Abhängigkeiten aktualisiert: erfordert jetzt ioBroker Admin 8+"
@@ -51,11 +55,7 @@
     "readme": "README.md",
     "restartAdapters": [],
     "dependencies": [],
-    "globalDependencies": [
-      {
-        "admin": ">=8.0.0"
-      }
-    ]
+    "globalDependencies": []
   },
   "native": {
     "frigateInstance": "frigate.0",
