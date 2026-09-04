@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "frigate-service",
-    "version": "0.1.4",
+    "version": "0.2.0",
     "news": {
+      "0.2.0": {
+        "en": "Breaking: Custom config UI rebuilt for GUI API generation 2 (requires ioBroker Admin >=8.0.0). Admin 7.x is no longer supported.",
+        "de": "Breaking: Benutzerdefinierte Konfigurations-UI für GUI-API-Generation 2 neu gebaut (erfordert ioBroker Admin >=8.0.0). Admin 7.x wird nicht mehr unterstützt."
+      },
       "0.1.4": {
         "en": "Require ioBroker Admin >=7.6.17 (backward-compatible minimum, no forced Admin 8)",
         "de": "Erfordert jetzt ioBroker Admin >=7.6.17 (abwärtskompatibles Minimum, kein erzwungenes Admin 8)"
@@ -61,7 +65,7 @@
     "dependencies": [],
     "globalDependencies": [
       {
-        "admin": ">=7.6.17"
+        "admin": ">=8.0.0"
       }
     ]
   },
